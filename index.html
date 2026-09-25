@@ -1,1 +1,2645 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<title>NFT-Al assistant</title>
+<style>
+:root{
+  --font-size: 15px;
+  --bg:#0b0d12;
+  --bg-2:#11141b;
+  --sidebar-bg:#0e1116;
+  --panel:#161a22;
+  --panel-2:#1c212b;
+  --border:#232936;
+  --border-2:#2e3646;
+  --text:#e6e9ef;
+  --text-dim:#98a1b3;
+  --text-mute:#6b7488;
+  --accent:#7c5cff;
+  --accent-2:#4ea8ff;
+  --accent-soft:rgba(124,92,255,.15);
+  --user-bg:linear-gradient(135deg,#7c5cff,#4f7bff);
+  --user-text:#ffffff;
+  --ai-bg:#161a22;
+  --danger:#ff5d5d;
+  --ok:#35d07f;
+  --warn:#ffb84d;
+  --shadow:0 10px 34px rgba(0,0,0,.42);
+  --code-bg:#0b0e14;
+}
+[data-theme="light"]{
+  --bg:#f4f6fb;
+  --bg-2:#ffffff;
+  --sidebar-bg:#ffffff;
+  --panel:#ffffff;
+  --panel-2:#eff1f7;
+  --border:#e2e6ef;
+  --border-2:#d2d8e5;
+  --text:#14161c;
+  --text-dim:#5b6373;
+  --text-mute:#8b93a6;
+  --accent:#6b4dff;
+  --accent-2:#1f7ae0;
+  --accent-soft:rgba(107,77,255,.10);
+  --user-bg:linear-gradient(135deg,#6b4dff,#3f7bff);
+  --ai-bg:#ffffff;
+  --shadow:0 10px 34px rgba(20,25,40,.10);
+  --code-bg:#f6f7fb;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:var(--font-size);
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
+  transition:background .3s ease,color .3s ease;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:20px;border:3px solid transparent;background-clip:content-box;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-mute);background-clip:content-box;}
 
+.app{display:flex;height:100vh;height:100dvh;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{
+  width:284px;flex:0 0 284px;
+  background:var(--sidebar-bg);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:14px 12px;gap:10px;
+  transition:transform .28s cubic-bezier(.4,0,.2,1),background .3s;
+  z-index:40;
+}
+.side-head{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 6px;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{
+  width:34px;height:34px;border-radius:11px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  display:grid;place-items:center;font-weight:800;color:#fff;font-size:15px;
+  box-shadow:0 6px 18px rgba(124,92,255,.4);
+}
+.logo-text{font-weight:700;letter-spacing:.2px;font-size:15.5px;}
+.side-close{display:none;}
+
+.new-chat{
+  display:flex;align-items:center;gap:9px;justify-content:center;
+  padding:11px 14px;border-radius:13px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;font-weight:600;
+  box-shadow:0 8px 22px rgba(124,92,255,.30);
+  transition:transform .15s ease,box-shadow .2s ease,filter .2s;
+}
+.new-chat:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 10px 26px rgba(124,92,255,.42);}
+.new-chat:active{transform:translateY(0) scale(.985);}
+
+.search{
+  width:100%;padding:10px 12px;border-radius:11px;
+  background:var(--panel);border:1px solid var(--border);
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.search::placeholder{color:var(--text-mute);}
+.search:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+
+.chat-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding-right:2px;min-height:40px;}
+.chat-item{
+  display:flex;align-items:center;gap:6px;
+  padding:9px 10px;border-radius:11px;
+  cursor:pointer;border:1px solid transparent;
+  transition:background .16s,border-color .16s;
+  position:relative;
+}
+.chat-item:hover{background:var(--panel);}
+.chat-item.active{background:var(--panel-2);border-color:var(--border-2);}
+.chat-item-main{flex:1;min-width:0;}
+.chat-item-title{
+  font-size:13.5px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.chat-item-date{font-size:11px;color:var(--text-mute);margin-top:2px;}
+.chat-item-actions{display:flex;gap:2px;opacity:0;transition:opacity .16s;}
+.chat-item:hover .chat-item-actions,.chat-item.active .chat-item-actions{opacity:1;}
+.mini{
+  width:24px;height:24px;border-radius:7px;display:grid;place-items:center;
+  font-size:12px;color:var(--text-dim);transition:background .15s,color .15s;
+}
+.mini:hover{background:var(--border);color:var(--text);}
+.mini.danger:hover{background:rgba(255,93,93,.15);color:var(--danger);}
+.rename-input{
+  width:100%;padding:4px 6px;border-radius:7px;background:var(--bg-2);
+  border:1px solid var(--accent);outline:none;font-size:13px;
+}
+.empty-history{font-size:12.5px;color:var(--text-mute);text-align:center;padding:18px 8px;}
+
+.side-foot{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--border);padding-top:10px;}
+.side-btn{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 11px;border-radius:10px;
+  font-size:13.5px;color:var(--text-dim);
+  transition:background .16s,color .16s;
+  text-align:left;width:100%;
+}
+.side-btn:hover{background:var(--panel);color:var(--text);}
+.side-btn.danger:hover{background:rgba(255,93,93,.12);color:var(--danger);}
+.export-wrap{position:relative;}
+.menu{
+  position:absolute;bottom:calc(100% + 6px);left:0;right:0;
+  background:var(--panel);border:1px solid var(--border-2);
+  border-radius:12px;padding:5px;display:none;flex-direction:column;gap:2px;
+  box-shadow:var(--shadow);z-index:30;
+  animation:pop .16s ease;
+}
+.menu.open{display:flex;}
+.menu button{
+  padding:9px 10px;border-radius:8px;text-align:left;font-size:13px;color:var(--text-dim);
+  transition:background .15s,color .15s;
+}
+.menu button:hover{background:var(--panel-2);color:var(--text);}
+@keyframes pop{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;background:var(--bg);}
+.topbar{
+  height:56px;flex:0 0 56px;
+  display:flex;align-items:center;gap:10px;
+  padding:0 14px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg);
+  z-index:20;
+}
+.menu-btn{display:none;}
+.topbar-title{
+  font-weight:600;font-size:15px;flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.topbar-actions{display:flex;align-items:center;gap:6px;}
+.counter{font-size:12px;color:var(--text-mute);white-space:nowrap;}
+.icon-btn{
+  width:36px;height:36px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text-dim);font-size:16px;
+  transition:background .16s,color .16s,transform .16s;
+}
+.icon-btn:hover{background:var(--panel);color:var(--text);transform:translateY(-1px);}
+.icon-btn:active{transform:scale(.94);}
+.lang-btn{
+  height:32px;padding:0 10px;border-radius:9px;
+  display:grid;place-items:center;
+  background:var(--panel);border:1px solid var(--border);
+  font-size:12px;font-weight:700;letter-spacing:.5px;
+  color:var(--text-dim);
+  transition:background .16s,color .16s,border-color .16s,transform .16s;
+  min-width:44px;
+}
+.lang-btn:hover{background:var(--panel-2);color:var(--text);border-color:var(--accent);transform:translateY(-1px);}
+.lang-btn:active{transform:scale(.94);}
+
+/* MESSAGES */
+.messages{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:26px 18px 10px;
+  scroll-behavior:smooth;
+  overscroll-behavior:contain;
+}
+.msg{
+  display:flex;gap:12px;align-items:flex-start;
+  max-width:860px;margin:0 auto 22px;
+  animation:fadeUp .32s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.msg.user{flex-direction:row-reverse;}
+.avatar{
+  width:34px;height:34px;flex:0 0 34px;border-radius:11px;
+  display:grid;place-items:center;font-size:12px;font-weight:700;
+  user-select:none;
+}
+.msg.ai .avatar{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 5px 16px rgba(124,92,255,.35);}
+.msg.user .avatar{background:var(--panel-2);color:var(--text-dim);border:1px solid var(--border-2);}
+.col{min-width:0;max-width:calc(100% - 46px);display:flex;flex-direction:column;}
+.msg.user .col{align-items:flex-end;}
+.bubble{
+  background:var(--ai-bg);border:1px solid var(--border);
+  border-radius:16px;padding:12px 16px;
+  max-width:100%;overflow-wrap:anywhere;word-break:break-word;
+  box-shadow:0 2px 10px rgba(0,0,0,.10);
+}
+.msg.user .bubble{
+  background:var(--user-bg);color:var(--user-text);
+  border-color:transparent;border-bottom-right-radius:6px;
+  box-shadow:0 6px 20px rgba(90,90,255,.22);
+}
+.msg.ai .bubble{border-bottom-left-radius:6px;}
+.msg.error .bubble{border-color:rgba(255,93,93,.45);background:rgba(255,93,93,.08);}
+.plain{white-space:pre-wrap;line-height:1.6;}
+.msg-meta{font-size:11px;color:var(--text-mute);margin:6px 4px 0;}
+.msg.user .msg-meta{text-align:right;}
+.msg-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;}
+.act{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 10px;border-radius:9px;font-size:12px;color:var(--text-dim);
+  border:1px solid var(--border);background:transparent;
+  transition:background .15s,color .15s,border-color .15s,transform .15s;
+}
+.act:hover{background:var(--panel-2);color:var(--text);border-color:var(--border-2);transform:translateY(-1px);}
+.act.ok{color:var(--ok);border-color:rgba(53,208,127,.4);}
+
+/* TYPING */
+.typing{display:flex;align-items:center;gap:12px;max-width:860px;margin:0 auto 22px;animation:fadeUp .3s;}
+.typing .avatar{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 5px 16px rgba(124,92,255,.35);}
+.typing-box{
+  background:var(--ai-bg);border:1px solid var(--border);
+  border-radius:16px;border-bottom-left-radius:6px;
+  padding:13px 16px;display:flex;align-items:center;gap:9px;
+}
+.typing-label{font-size:12.5px;color:var(--text-dim);}
+.dots{display:flex;gap:4px;}
+.dots i{
+  width:6px;height:6px;border-radius:50%;background:var(--accent);
+  display:block;animation:bounce 1.2s infinite;
+}
+.dots i:nth-child(2){animation-delay:.15s;}
+.dots i:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5;}30%{transform:translateY(-5px);opacity:1;}}
+
+/* WELCOME */
+.welcome{
+  max-width:760px;margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:40px 8px;animation:fadeUp .45s ease;
+}
+.welcome-logo{
+  width:74px;height:74px;border-radius:24px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  display:grid;place-items:center;font-size:26px;font-weight:800;color:#fff;
+  box-shadow:0 16px 40px rgba(124,92,255,.4);
+  margin-bottom:22px;
+  animation:floaty 4s ease-in-out infinite;
+}
+@keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.welcome h1{font-size:clamp(21px,3.4vw,30px);margin:0 0 8px;font-weight:700;letter-spacing:-.4px;}
+.welcome p{margin:0 0 30px;color:var(--text-dim);font-size:15px;}
+.quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%;max-width:600px;}
+.quick{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 16px;border-radius:14px;
+  background:var(--panel);border:1px solid var(--border);
+  color:var(--text);font-size:13.5px;font-weight:500;text-align:left;
+  transition:transform .18s ease,border-color .18s,box-shadow .18s,background .18s;
+}
+.quick:hover{
+  transform:translateY(-3px);border-color:var(--accent);
+  box-shadow:0 10px 26px rgba(124,92,255,.22);background:var(--panel-2);
+}
+.quick:active{transform:translateY(-1px) scale(.99);}
+.quick .qi{font-size:17px;}
+
+/* COMPOSER */
+.composer{padding:8px 18px 16px;background:var(--bg);}
+.composer-inner{
+  max-width:860px;margin:0 auto;
+  display:flex;align-items:flex-end;gap:8px;
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:20px;padding:8px 8px 8px 16px;
+  transition:border-color .2s,box-shadow .2s;
+  box-shadow:0 6px 24px rgba(0,0,0,.16);
+}
+.composer-inner:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);}
+#input{
+  flex:1;border:none;background:transparent;outline:none;resize:none;
+  padding:9px 0;max-height:190px;min-height:24px;line-height:1.5;
+  overflow-y:auto;
+}
+#input::placeholder{color:var(--text-mute);}
+.composer-btns{display:flex;gap:6px;align-items:center;}
+.send-btn,.stop-btn{
+  width:40px;height:40px;border-radius:13px;display:grid;place-items:center;
+  font-size:16px;transition:transform .15s,filter .2s,background .2s,opacity .2s;
+}
+.send-btn{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 6px 18px rgba(124,92,255,.35);}
+.send-btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.send-btn:active{transform:scale(.93);}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none;}
+.stop-btn{background:rgba(255,93,93,.14);color:var(--danger);display:none;}
+.stop-btn:hover{background:rgba(255,93,93,.24);}
+.stop-btn.visible{display:grid;}
+.composer-hint{
+  max-width:860px;margin:7px auto 0;text-align:center;
+  font-size:11px;color:var(--text-mute);
+}
+
+/* MARKDOWN */
+.md{line-height:1.68;}
+.md>*:first-child{margin-top:0;}
+.md>*:last-child{margin-bottom:0;}
+.md p{margin:0 0 10px;}
+.md h1,.md h2,.md h3,.md h4,.md h5,.md h6{margin:16px 0 8px;line-height:1.3;font-weight:650;letter-spacing:-.2px;}
+.md h1{font-size:1.45em;}
+.md h2{font-size:1.3em;}
+.md h3{font-size:1.15em;}
+.md h4,.md h5,.md h6{font-size:1.03em;}
+.md ul,.md ol{margin:0 0 10px;padding-left:22px;}
+.md li{margin:4px 0;}
+.md blockquote{
+  margin:10px 0;padding:8px 14px;border-left:3px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;color:var(--text-dim);
+}
+.md a{color:var(--accent-2);text-decoration:none;border-bottom:1px dashed currentColor;}
+.md a:hover{opacity:.8;}
+.md hr{border:none;border-top:1px solid var(--border);margin:15px 0;}
+.md code.inline{
+  background:var(--accent-soft);padding:2px 6px;border-radius:6px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;
+}
+.md strong{font-weight:680;}
+.code-block{
+  margin:12px 0;border:1px solid var(--border);border-radius:13px;overflow:hidden;
+  background:var(--code-bg);
+}
+.code-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 12px;background:rgba(255,255,255,.045);
+  border-bottom:1px solid var(--border);
+  font-size:11.5px;color:var(--text-mute);letter-spacing:.3px;text-transform:lowercase;
+}
+[data-theme="light"] .code-head{background:rgba(0,0,0,.03);}
+.code-copy{
+  font-size:11.5px;padding:3px 9px;border-radius:7px;color:var(--text-dim);
+  border:1px solid var(--border);transition:all .15s;
+}
+.code-copy:hover{background:var(--panel-2);color:var(--text);}
+.code-copy.ok{color:var(--ok);border-color:rgba(53,208,127,.45);}
+.code-block pre{margin:0;padding:13px 15px;overflow-x:auto;}
+.code-block code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+  font-size:12.8px;line-height:1.6;white-space:pre;color:var(--text);
+}
+
+/* MODAL */
+.modal{position:fixed;inset:0;z-index:100;display:none;}
+.modal.open{display:block;}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:fadeIn .2s;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal-card{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(680px,calc(100vw - 28px));max-height:min(88vh,900px);
+  background:var(--panel);border:1px solid var(--border-2);border-radius:20px;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:var(--shadow);animation:modalIn .24s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes modalIn{from{opacity:0;transform:translate(-50%,-46%) scale(.97);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;border-bottom:1px solid var(--border);
+}
+.modal-head h2{margin:0;font-size:16.5px;font-weight:650;}
+.modal-body{padding:16px 18px;overflow-y:auto;flex:1;}
+.modal-foot{
+  display:flex;align-items:center;gap:9px;
+  padding:13px 18px;border-top:1px solid var(--border);background:var(--bg-2);
+}
+.spacer{flex:1;}
+.btn{
+  padding:9px 16px;border-radius:11px;font-size:13.5px;font-weight:550;
+  transition:all .16s;border:1px solid transparent;
+}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 6px 18px rgba(124,92,255,.3);}
+.btn.primary:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn.ghost{border-color:var(--border-2);color:var(--text-dim);}
+.btn.ghost:hover{background:var(--panel-2);color:var(--text);}
+.btn.danger{border-color:rgba(255,93,93,.4);color:var(--danger);}
+.btn.danger:hover{background:rgba(255,93,93,.12);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.section{margin-bottom:22px;}
+.section h3{
+  font-size:12px;text-transform:uppercase;letter-spacing:.9px;
+  color:var(--text-mute);margin:0 0 12px;font-weight:650;
+}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px;}
+.field>span{font-size:12.5px;color:var(--text-dim);font-weight:500;}
+.field input[type=text],.field input[type=password],.field input[type=number],.field select,.field textarea{
+  width:100%;padding:10px 12px;border-radius:11px;
+  background:var(--bg-2);border:1px solid var(--border);
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.field textarea{resize:vertical;min-height:90px;line-height:1.55;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.field input[type=range]{width:100%;accent-color:var(--accent);padding:0;}
+.row{display:flex;gap:12px;flex-wrap:wrap;}
+.row>.field{flex:1;min-width:170px;}
+.warn{
+  font-size:12px;color:var(--warn);background:rgba(255,184,77,.10);
+  border:1px solid rgba(255,184,77,.28);border-radius:11px;
+  padding:10px 12px;margin-bottom:14px;line-height:1.5;
+}
+.range-val{font-size:12.5px;color:var(--accent);font-weight:600;}
+.data-actions{display:flex;gap:9px;flex-wrap:wrap;}
+
+/* TOASTS */
+.toasts{
+  position:fixed;bottom:22px;right:22px;z-index:200;
+  display:flex;flex-direction:column;gap:9px;pointer-events:none;
+}
+.toast{
+  background:var(--panel);border:1px solid var(--border-2);
+  border-left:3px solid var(--accent);
+  padding:11px 16px;border-radius:12px;font-size:13px;
+  box-shadow:var(--shadow);min-width:200px;max-width:330px;
+  animation:toastIn .28s cubic-bezier(.2,.8,.3,1);
+  pointer-events:auto;line-height:1.45;
+}
+.toast.ok{border-left-color:var(--ok);}
+.toast.err{border-left-color:var(--danger);}
+.toast.out{animation:toastOut .25s forwards;}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px);}to{opacity:1;transform:translateX(0);}}
+@keyframes toastOut{to{opacity:0;transform:translateX(40px);}}
+
+/* OVERLAY */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.overlay.show{opacity:1;pointer-events:auto;}
+
+@media (max-width:860px){
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;
+    transform:translateX(-102%);
+    box-shadow:var(--shadow);
+    width:290px;flex-basis:290px;
+  }
+  .sidebar.open{transform:translateX(0);}
+  .side-close{display:grid;}
+  .menu-btn{display:grid;}
+  .messages{padding:18px 12px 8px;}
+  .composer{padding:6px 12px 12px;}
+  .composer-hint{display:none;}
+  .col{max-width:calc(100% - 44px);}
+  .avatar{width:30px;height:30px;flex-basis:30px;font-size:11px;}
+  .quick-grid{grid-template-columns:1fr;}
+  .counter{display:none;}
+  .toasts{left:14px;right:14px;bottom:14px;align-items:stretch;}
+  .toast{max-width:none;}
+  .modal-card{max-height:92vh;}
+  .welcome{padding:24px 4px;}
+  .chat-item-actions{opacity:1;}
+}
+@media (max-width:420px){
+  .topbar{padding:0 10px;}
+  .msg{gap:9px;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <div class="logo">
+        <div class="logo-mark">N</div>
+        <div class="logo-text" id="logoText">NFT-Al</div>
+      </div>
+      <button class="icon-btn side-close" id="closeSidebarBtn" title="Close" type="button">✕</button>
+    </div>
+
+    <button class="new-chat" id="newChatBtn" type="button"><span>＋</span> <span id="newChatLabel">New chat</span></button>
+
+    <input id="searchInput" class="search" type="text" placeholder="Search history..." autocomplete="off">
+
+    <div class="chat-list" id="chatList"></div>
+
+    <div class="side-foot">
+      <button class="side-btn" id="settingsBtn" type="button"><span>⚙️</span> <span id="settingsLabel">Settings</span></button>
+      <button class="side-btn" id="themeBtn" type="button"><span id="themeIcon">🌙</span> <span id="themeLabel">Theme</span></button>
+      <div class="export-wrap">
+        <button class="side-btn" id="exportBtn" type="button"><span>⬇️</span> <span id="exportLabel">Export</span></button>
+        <div class="menu" id="exportMenu">
+          <button data-exp="txt" type="button" id="exportTxtLabel">📄 Download TXT</button>
+          <button data-exp="json" type="button" id="exportJsonLabel">🧩 Download JSON</button>
+        </div>
+      </div>
+      <button class="side-btn danger" id="clearHistoryBtn" type="button"><span>🗑️</span> <span id="clearHistoryLabel">Clear history</span></button>
+    </div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menuBtn" title="Menu" type="button">☰</button>
+      <div class="topbar-title" id="topbarTitle">NFT-Al assistant</div>
+      <div class="topbar-actions">
+        <span class="counter" id="msgCounter">0</span>
+        <button class="lang-btn" id="langBtnTop" type="button" title="Switch language">EN</button>
+        <button class="icon-btn" id="themeBtnTop" title="Theme" type="button">🌙</button>
+        <button class="icon-btn" id="settingsBtnTop" title="Settings" type="button">⚙️</button>
+      </div>
+    </header>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="composer">
+      <div class="composer-inner">
+        <textarea id="input" rows="1" placeholder="Type a message..." autocomplete="off"></textarea>
+        <div class="composer-btns">
+          <button class="stop-btn" id="stopBtn" title="Stop generation" type="button">■</button>
+          <button class="send-btn" id="sendBtn" title="Send" type="button">➤</button>
+        </div>
+      </div>
+      <div class="composer-hint" id="composerHint">Enter — send · Shift+Enter — new line · Ctrl+K — new chat</div>
+    </div>
+  </main>
+</div>
+
+<div class="modal" id="settingsModal">
+  <div class="modal-backdrop" data-close="1"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="settingsTitle">⚙️ Settings</h2>
+      <button class="icon-btn" id="closeSettingsBtn" title="Close" type="button">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <section class="section">
+        <h3 id="secAI">AI</h3>
+
+        <label class="field">
+          <span id="lblApiFormat">API format</span>
+          <select id="setApiFormat">
+            <option value="responses">Responses API</option>
+            <option value="chat">Chat Completions</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span id="lblApiKey">API Key</span>
+          <input id="setApiKey" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false">
+        </label>
+
+        <div class="warn" id="apiKeyWarn">
+          ⚠️ Do not store a secret API key in a public client app. For production use a backend/proxy. The key is stored only locally in your browser.
+        </div>
+
+        <div class="row">
+          <label class="field">
+            <span id="lblModel">Model</span>
+            <input id="setModel" type="text" placeholder="gpt-4o-mini" spellcheck="false">
+          </label>
+          <label class="field">
+            <span id="lblMaxTokens">Max Tokens</span>
+            <input id="setMaxTokens" type="number" min="1" max="32000" step="1" placeholder="1200">
+          </label>
+        </div>
+
+        <label class="field">
+          <span id="lblApiUrl">API URL</span>
+          <input id="setApiUrl" type="text" placeholder="https://api.openai.com/v1/responses" spellcheck="false">
+        </label>
+
+        <label class="field">
+          <span><span id="lblTemperature">Temperature</span> — <b class="range-val" id="tempVal">0.7</b></span>
+          <input id="setTemperature" type="range" min="0" max="2" step="0.1" value="0.7">
+        </label>
+
+        <label class="field">
+          <span id="lblSystemPrompt">System Prompt</span>
+          <textarea id="setSystemPrompt" spellcheck="false"></textarea>
+        </label>
+      </section>
+
+      <section class="section">
+        <h3 id="secInterface">Interface</h3>
+        <div class="row">
+          <label class="field">
+            <span id="lblUiLang">Interface language</span>
+            <select id="setUiLang">
+              <option value="en">English</option>
+              <option value="ru">Русский</option>
+            </select>
+          </label>
+          <label class="field">
+            <span id="lblReplyLang">Reply language</span>
+            <select id="setLanguage">
+              <option value="auto">Auto (match message)</option>
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label class="field">
+            <span id="lblTheme">Theme</span>
+            <select id="setTheme">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          <span><span id="lblFontSize">Font size</span> — <b class="range-val" id="fontVal">15px</b></span>
+          <input id="setFontSize" type="range" min="12" max="20" step="1" value="15">
+        </label>
+      </section>
+
+      <section class="section">
+        <h3 id="secData">Data</h3>
+        <div class="data-actions">
+          <button class="btn ghost" id="dataExportTxt" type="button">⬇️ <span id="dataTxtLabel">Export TXT</span></button>
+          <button class="btn ghost" id="dataExportJson" type="button">🧩 <span id="dataJsonLabel">Export JSON</span></button>
+          <button class="btn danger" id="dataClearHistory" type="button">🗑️ <span id="dataClearLabel">Clear history</span></button>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn ghost" id="checkApiBtn" type="button">🔌 <span id="checkApiLabel">Check API</span></button>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="settingsCancel" type="button"><span id="cancelLabel">Cancel</span></button>
+      <button class="btn primary" id="settingsSave" type="button"><span id="saveLabel">Save</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   I18N
+   ========================================================= */
+var I18N = {
+  en: {
+    appTitle: 'NFT-Al assistant',
+    logoText: 'NFT-Al',
+    newChat: 'New chat',
+    searchPlaceholder: 'Search history...',
+    settings: 'Settings',
+    theme: 'Theme',
+    export: 'Export',
+    downloadTxt: '📄 Download TXT',
+    downloadJson: '🧩 Download JSON',
+    clearHistory: 'Clear history',
+    themeDark: 'Dark theme',
+    themeLight: 'Light theme',
+    welcomeTitle: "Hello! I'm NFT-Al assistant 👋",
+    welcomeSub: 'How can I help you?',
+    qCodeLabel: 'Write code',
+    qCodePrompt: 'Write a JavaScript code example',
+    qMathLabel: 'Solve a task',
+    qMathPrompt: 'Solve: (10 + 5) * 2',
+    qExplainLabel: 'Explain a topic',
+    qExplainPrompt: 'Explain what recursion is',
+    qIdeaLabel: 'Come up with an idea',
+    qIdeaPrompt: 'Come up with a pet-project idea',
+    inputPlaceholder: 'Type a message...',
+    composerHint: 'Enter — send · Shift+Enter — new line · Ctrl+K — new chat',
+    typing: 'NFT-Al is typing',
+    copy: '📋 Copy',
+    copiedShort: '✓ Copied',
+    copyFailed: 'Failed to copy',
+    regenerate: '🔄 Regenerate',
+    refine: '💡 Refine',
+    you: 'You',
+    assistant: 'NFT-Al',
+    emptyHistory: 'History is empty',
+    nothingFound: 'Nothing found',
+    historyCleared: 'History cleared',
+    historyAlreadyEmpty: 'History is already empty',
+    clearHistoryConfirm: 'Delete the entire chat history? This cannot be undone.',
+    chatDeleted: 'Chat deleted',
+    deleteChatConfirm: 'Delete chat "{title}"?',
+    noChatToExport: 'No chat to export',
+    exportTxtDone: 'TXT export ready',
+    exportJsonDone: 'JSON export ready',
+    settingsSaved: 'Settings saved',
+    saveFailed: 'Failed to save',
+    needApiKey: 'Enter an API key to test',
+    checking: '⏳ Testing...',
+    checkCancelled: 'Test cancelled',
+    serverUnavailable: 'Server unavailable',
+    apiWorks: 'API works ✓',
+    apiEmpty: 'API responded but no text',
+    apiNotJson: 'API works but response is not JSON',
+    waitForReply: 'Wait for the reply or stop generation',
+    noRequestToRepeat: 'No request to repeat',
+    stoppedByUser: '⏹ Generation stopped by user.',
+    generationStopped: 'Generation stopped',
+    emptyReply: 'Empty response from server. Try again or change API settings.',
+    unknownError: 'Unknown error: ',
+    // Settings modal
+    settingsTitle: '⚙️ Settings',
+    secAI: 'AI',
+    secInterface: 'Interface',
+    secData: 'Data',
+    lblApiFormat: 'API format',
+    lblApiKey: 'API Key',
+    lblModel: 'Model',
+    lblMaxTokens: 'Max Tokens',
+    lblApiUrl: 'API URL',
+    lblTemperature: 'Temperature',
+    lblSystemPrompt: 'System Prompt',
+    lblUiLang: 'Interface language',
+    lblReplyLang: 'Reply language',
+    lblTheme: 'Theme',
+    lblFontSize: 'Font size',
+    replyLangAuto: 'Auto (match message)',
+    replyLangRu: 'Russian',
+    replyLangEn: 'English',
+    apiKeyWarn: '⚠️ Do not store a secret API key in a public client app. For production use a backend/proxy. The key is stored only locally in your browser.',
+    dataTxtLabel: 'Export TXT',
+    dataJsonLabel: 'Export JSON',
+    dataClearLabel: 'Clear history',
+    checkApiLabel: 'Check API',
+    cancelLabel: 'Cancel',
+    saveLabel: 'Save',
+    apiKeyRequiredForCheck: 'Enter an API key to test',
+    rename: 'Rename',
+    deleteChat: 'Delete'
+  },
+  ru: {
+    appTitle: 'NFT-Al ассистент',
+    logoText: 'NFT-Al',
+    newChat: 'Новый чат',
+    searchPlaceholder: 'Поиск по истории...',
+    settings: 'Настройки',
+    theme: 'Тема',
+    export: 'Экспорт',
+    downloadTxt: '📄 Скачать TXT',
+    downloadJson: '🧩 Скачать JSON',
+    clearHistory: 'Очистить историю',
+    themeDark: 'Тёмная тема',
+    themeLight: 'Светлая тема',
+    welcomeTitle: 'Привет! Я NFT-Al ассистент 👋',
+    welcomeSub: 'Чем могу помочь?',
+    qCodeLabel: 'Написать код',
+    qCodePrompt: 'Напиши пример кода на JavaScript',
+    qMathLabel: 'Решить задачу',
+    qMathPrompt: 'Реши задачу: (10 + 5) * 2',
+    qExplainLabel: 'Объяснить тему',
+    qExplainPrompt: 'Объясни, что такое рекурсия',
+    qIdeaLabel: 'Придумать идею',
+    qIdeaPrompt: 'Придумай идею для пет-проекта',
+    inputPlaceholder: 'Напишите сообщение...',
+    composerHint: 'Enter — отправить · Shift+Enter — новая строка · Ctrl+K — новый чат',
+    typing: 'NFT-Al печатает',
+    copy: '📋 Копировать',
+    copiedShort: '✓ Скопировано',
+    copyFailed: 'Не удалось скопировать',
+    regenerate: '🔄 Повторить',
+    refine: '💡 Уточнить',
+    you: 'Вы',
+    assistant: 'NFT-Al',
+    emptyHistory: 'История пуста',
+    nothingFound: 'Ничего не найдено',
+    historyCleared: 'История очищена',
+    historyAlreadyEmpty: 'История уже пуста',
+    clearHistoryConfirm: 'Удалить всю историю чатов? Это действие нельзя отменить.',
+    chatDeleted: 'Чат удалён',
+    deleteChatConfirm: 'Удалить чат «{title}»?',
+    noChatToExport: 'Нет чата для экспорта',
+    exportTxtDone: 'Экспорт TXT готов',
+    exportJsonDone: 'Экспорт JSON готов',
+    settingsSaved: 'Настройки сохранены',
+    saveFailed: 'Не удалось сохранить',
+    needApiKey: 'Введите API-ключ для проверки',
+    checking: '⏳ Проверка...',
+    checkCancelled: 'Проверка отменена',
+    serverUnavailable: 'Сервер недоступен',
+    apiWorks: 'API работает ✓',
+    apiEmpty: 'API ответил, но пустой текст',
+    apiNotJson: 'API работает, но ответ не JSON',
+    waitForReply: 'Дождитесь ответа или остановите генерацию',
+    noRequestToRepeat: 'Нет запроса для повтора',
+    stoppedByUser: '⏹ Генерация остановлена пользователем.',
+    generationStopped: 'Генерация остановлена',
+    emptyReply: 'Пустой ответ от сервера. Попробуйте ещё раз или измените настройки API.',
+    unknownError: 'Неизвестная ошибка: ',
+    settingsTitle: '⚙️ Настройки',
+    secAI: 'AI',
+    secInterface: 'Интерфейс',
+    secData: 'Данные',
+    lblApiFormat: 'API формат',
+    lblApiKey: 'API Key',
+    lblModel: 'Model',
+    lblMaxTokens: 'Max Tokens',
+    lblApiUrl: 'API URL',
+    lblTemperature: 'Temperature',
+    lblSystemPrompt: 'System Prompt',
+    lblUiLang: 'Язык интерфейса',
+    lblReplyLang: 'Язык ответов',
+    lblTheme: 'Тема',
+    lblFontSize: 'Размер шрифта',
+    replyLangAuto: 'Авто (по языку сообщения)',
+    replyLangRu: 'Русский',
+    replyLangEn: 'English',
+    apiKeyWarn: '⚠️ Не храните секретный API-ключ в публичном клиентском приложении. Для production используйте backend/proxy. Ключ сохраняется только локально в вашем браузере.',
+    dataTxtLabel: 'Экспорт TXT',
+    dataJsonLabel: 'Экспорт JSON',
+    dataClearLabel: 'Очистить историю',
+    checkApiLabel: 'Проверить API',
+    cancelLabel: 'Отмена',
+    saveLabel: 'Сохранить',
+    apiKeyRequiredForCheck: 'Введите API-ключ для проверки',
+    rename: 'Переименовать',
+    deleteChat: 'Удалить'
+  }
+};
+
+function t(key){
+  var pack = I18N[state.settings.uiLang] || I18N.en;
+  var val = pack[key];
+  if (val != null) return val;
+  return I18N.en[key] != null ? I18N.en[key] : key;
+}
+
+/* =========================================================
+   CONSTANTS
+   ========================================================= */
+var LS = {
+  chats:    'nftal_chats_v1',
+  settings: 'nftal_settings_v1',
+  current:  'nftal_current_v1'
+};
+
+var DEFAULT_SYSTEM_PROMPT =
+  "You are NFT-Al assistant — a helpful, friendly and accurate AI assistant.\n" +
+  "Reply in the user's language: if the user writes in Russian — reply in Russian, " +
+  "if in English — reply in English.\n" +
+  "Be precise and do not invent facts: if you don't know or information is insufficient — say so honestly.\n" +
+  "Explain complex things simply and step by step.\n" +
+  "For programming tasks, provide working code with short comments.\n" +
+  "Use Markdown: headings, lists, **bold**, *italic*, `code` and fenced code blocks with a language tag.\n" +
+  "Be concise but thorough.";
+
+var DEFAULT_SETTINGS = {
+  apiFormat: 'responses',
+  apiKey: '',
+  model: 'gpt-4o-mini',
+  apiUrl: '',
+  systemPrompt: DEFAULT_SYSTEM_PROMPT,
+  temperature: 0.7,
+  maxTokens: 1200,
+  language: 'auto',
+  uiLang: 'en',
+  theme: 'dark',
+  fontSize: 15
+};
+
+var DEFAULT_URLS = {
+  responses: 'https://api.openai.com/v1/responses',
+  chat:      'https://api.openai.com/v1/chat/completions'
+};
+
+var state = {
+  chats: [],
+  currentChatId: null,
+  settings: Object.assign({}, DEFAULT_SETTINGS),
+  generating: false,
+  abortController: null,
+  searchQuery: ''
+};
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function $(sel, root){ return (root || document).querySelector(sel); }
+function $$(sel, root){ return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+function detectLang(text){
+  if (state.settings.language === 'ru') return 'ru';
+  if (state.settings.language === 'en') return 'en';
+  return /[а-яё]/i.test(String(text || '')) ? 'ru' : 'en';
+}
+function fmtTime(ts){
+  try { return new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); }
+  catch(e){ return ''; }
+}
+function fmtDate(ts){
+  try {
+    var d = new Date(ts);
+    var now = new Date();
+    if (d.toDateString() === now.toDateString()) return fmtTime(ts);
+    var y = new Date(now.getTime() - 86400000);
+    if (d.toDateString() === y.toDateString()) {
+      return state.settings.uiLang === 'ru' ? 'Вчера' : 'Yesterday';
+    }
+    return d.toLocaleDateString([], { day:'2-digit', month:'short' });
+  } catch(e){ return ''; }
+}
+function fmtNumber(n){
+  if (!isFinite(n)) return String(n);
+  if (Number.isInteger(n)) return String(n);
+  var r = Math.round(n * 1e10) / 1e10;
+  return String(r);
+}
+function escapeHtml(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* =========================================================
+   TOASTS
+   ========================================================= */
+function showToast(message, type){
+  var wrap = $('#toasts');
+  var el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = message;
+  wrap.appendChild(el);
+  setTimeout(function(){
+    el.classList.add('out');
+    setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 260);
+  }, 3200);
+}
+
+/* =========================================================
+   CLIPBOARD
+   ========================================================= */
+function copyText(text){
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(function(){ return true; })
+      .catch(function(){ return fallbackCopy(text); });
+  }
+  return Promise.resolve(fallbackCopy(text));
+}
+function fallbackCopy(text){
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch(e){ return false; }
+}
+
+/* =========================================================
+   MARKDOWN
+   ========================================================= */
+function makeCodeBlock(code, lang){
+  var wrap = document.createElement('div');
+  wrap.className = 'code-block';
+
+  var head = document.createElement('div');
+  head.className = 'code-head';
+
+  var langEl = document.createElement('span');
+  langEl.textContent = (lang || 'text').toLowerCase();
+
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'code-copy';
+  btn.textContent = state.settings.uiLang === 'ru' ? 'Копировать' : 'Copy';
+  btn.addEventListener('click', function(){
+    copyText(code).then(function(ok){
+      btn.textContent = ok ? (state.settings.uiLang === 'ru' ? 'Скопировано ✓' : 'Copied ✓') : (state.settings.uiLang === 'ru' ? 'Не удалось' : 'Failed');
+      btn.classList.toggle('ok', !!ok);
+      if (!ok) showToast(t('copyFailed'), 'err');
+      setTimeout(function(){
+        btn.textContent = state.settings.uiLang === 'ru' ? 'Копировать' : 'Copy';
+        btn.classList.remove('ok');
+      }, 1700);
+    });
+  });
+
+  head.appendChild(langEl);
+  head.appendChild(btn);
+
+  var pre = document.createElement('pre');
+  var codeEl = document.createElement('code');
+  codeEl.textContent = code;
+  pre.appendChild(codeEl);
+
+  wrap.appendChild(head);
+  wrap.appendChild(pre);
+  return wrap;
+}
+
+function renderInline(text, parent){
+  var re = /(`[^`\n]+`)|(\*\*[^*\n]+\*\*)|(__[^_\n]+__)|(\*[^*\n]+\*)|(_[^_\n]+_)|(~~[^~\n]+~~)|(\[[^\]\n]+\]\([^)\s]+\))/g;
+  var last = 0;
+  var m;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) {
+      parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+    }
+    var tok = m[0];
+    if (tok.charAt(0) === '`') {
+      var c = document.createElement('code');
+      c.className = 'inline';
+      c.textContent = tok.slice(1, -1);
+      parent.appendChild(c);
+    } else if (tok.slice(0,2) === '**' || tok.slice(0,2) === '__') {
+      var b = document.createElement('strong');
+      renderInline(tok.slice(2, -2), b);
+      parent.appendChild(b);
+    } else if (tok.slice(0,2) === '~~') {
+      var d = document.createElement('del');
+      renderInline(tok.slice(2, -2), d);
+      parent.appendChild(d);
+    } else if (tok.charAt(0) === '*' || tok.charAt(0) === '_') {
+      var em = document.createElement('em');
+      renderInline(tok.slice(1, -1), em);
+      parent.appendChild(em);
+    } else if (tok.charAt(0) === '[') {
+      var mm = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(tok);
+      if (mm) {
+        var a = document.createElement('a');
+        a.textContent = mm[1];
+        var href = mm[2].trim();
+        if (/^(https?:|mailto:)/i.test(href)) {
+          a.href = href;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer nofollow';
+        } else {
+          a.href = '#';
+          a.addEventListener('click', function(ev){ ev.preventDefault(); });
+          a.title = 'Link blocked';
+        }
+        parent.appendChild(a);
+      } else {
+        parent.appendChild(document.createTextNode(tok));
+      }
+    }
+    last = re.lastIndex;
+    if (re.lastIndex === m.index) re.lastIndex++;
+  }
+  if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+}
+
+function isFenceLine(s){ return /^\s*```/.test(s); }
+
+function renderMarkdown(src){
+  var frag = document.createDocumentFragment();
+  var raw = String(src == null ? '' : src).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  var lines = raw.split('\n');
+  var i = 0;
+
+  while (i < lines.length) {
+    var line = lines[i];
+
+    var fenceMatch = line.match(/^\s*```\s*([^\s`]*)\s*$/);
+    if (fenceMatch) {
+      var lang = fenceMatch[1] || 'text';
+      var codeLines = [];
+      i++;
+      while (i < lines.length && !/^\s*```\s*$/.test(lines[i])) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++;
+      frag.appendChild(makeCodeBlock(codeLines.join('\n'), lang));
+      continue;
+    }
+
+    var hMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (hMatch) {
+      var level = Math.min(hMatch[1].length, 6);
+      var h = document.createElement('h' + level);
+      renderInline(hMatch[2], h);
+      frag.appendChild(h);
+      i++;
+      continue;
+    }
+
+    if (/^\s*>\s?/.test(line)) {
+      var quoteLines = [];
+      while (i < lines.length && /^\s*>\s?/.test(lines[i])) {
+        quoteLines.push(lines[i].replace(/^\s*>\s?/, ''));
+        i++;
+      }
+      var bq = document.createElement('blockquote');
+      quoteLines.forEach(function(ql, idx){
+        if (idx > 0) bq.appendChild(document.createElement('br'));
+        renderInline(ql, bq);
+      });
+      frag.appendChild(bq);
+      continue;
+    }
+
+    if (/^\s*[-*+]\s+/.test(line)) {
+      var ul = document.createElement('ul');
+      while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) {
+        var li = document.createElement('li');
+        renderInline(lines[i].replace(/^\s*[-*+]\s+/, ''), li);
+        ul.appendChild(li);
+        i++;
+      }
+      frag.appendChild(ul);
+      continue;
+    }
+
+    if (/^\s*\d+\.\s+/.test(line)) {
+      var ol = document.createElement('ol');
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+        var li2 = document.createElement('li');
+        renderInline(lines[i].replace(/^\s*\d+\.\s+/, ''), li2);
+        ol.appendChild(li2);
+        i++;
+      }
+      frag.appendChild(ol);
+      continue;
+    }
+
+    if (/^\s*([-*_])\s*\1\s*\1[\s\1]*$/.test(line)) {
+      frag.appendChild(document.createElement('hr'));
+      i++;
+      continue;
+    }
+
+    if (/^\s*$/.test(line)) { i++; continue; }
+
+    var paraLines = [];
+    while (i < lines.length) {
+      var cur = lines[i];
+      if (/^\s*$/.test(cur)) break;
+      if (isFenceLine(cur)) break;
+      if (/^(#{1,6})\s+/.test(cur)) break;
+      if (/^\s*[-*+]\s+/.test(cur)) break;
+      if (/^\s*\d+\.\s+/.test(cur)) break;
+      if (/^\s*>\s?/.test(cur)) break;
+      if (/^\s*([-*_])\s*\1\s*\1[\s\1]*$/.test(cur)) break;
+      paraLines.push(cur);
+      i++;
+    }
+    if (paraLines.length > 0) {
+      var p = document.createElement('p');
+      paraLines.forEach(function(pl, idx){
+        if (idx > 0) p.appendChild(document.createElement('br'));
+        renderInline(pl, p);
+      });
+      frag.appendChild(p);
+    }
+  }
+
+  return frag;
+}
+
+/* =========================================================
+   SAFE MATH
+   ========================================================= */
+function safeMathEval(expr){
+  var s = String(expr).replace(/\s+/g, '').replace(/,/g, '.');
+  if (!s || s.length > 200) return null;
+  if (!/^[0-9+\-*/%().^]+$/.test(s)) return null;
+
+  var pos = 0;
+
+  function parseExpr(){
+    var left = parseTerm();
+    if (left === null) return null;
+    while (pos < s.length && (s[pos] === '+' || s[pos] === '-')) {
+      var op = s[pos++];
+      var right = parseTerm();
+      if (right === null) return null;
+      left = op === '+' ? left + right : left - right;
+    }
+    return left;
+  }
+  function parseTerm(){
+    var left = parseFactor();
+    if (left === null) return null;
+    while (pos < s.length && (s[pos] === '*' || s[pos] === '/' || s[pos] === '%')) {
+      var op = s[pos++];
+      var right = parseFactor();
+      if (right === null) return null;
+      if (op === '*') left = left * right;
+      else if (op === '/') left = left / right;
+      else left = left % right;
+    }
+    return left;
+  }
+  function parseFactor(){
+    var base = parseUnary();
+    if (base === null) return null;
+    if (pos < s.length && s[pos] === '^') {
+      pos++;
+      var exp = parseFactor();
+      if (exp === null) return null;
+      base = Math.pow(base, exp);
+    }
+    return base;
+  }
+  function parseUnary(){
+    if (pos < s.length && s[pos] === '-') { pos++; var v = parseUnary(); return v === null ? null : -v; }
+    if (pos < s.length && s[pos] === '+') { pos++; return parseUnary(); }
+    return parseAtom();
+  }
+  function parseAtom(){
+    if (pos < s.length && s[pos] === '(') {
+      pos++;
+      var v = parseExpr();
+      if (v === null) return null;
+      if (pos >= s.length || s[pos] !== ')') return null;
+      pos++;
+      return v;
+    }
+    var start = pos;
+    while (pos < s.length && /[0-9.]/.test(s[pos])) pos++;
+    if (pos === start) return null;
+    var num = parseFloat(s.slice(start, pos));
+    if (isNaN(num)) return null;
+    return num;
+  }
+
+  var result = parseExpr();
+  if (result === null || pos !== s.length || !isFinite(result)) return null;
+  return result;
+}
+
+/* =========================================================
+   LOCAL AI
+   ========================================================= */
+var JOKES_RU = [
+  "— Программист ставит на ночь два стакана: один с водой — если захочет пить, второй пустой — если не захочет.",
+  "Почему программисты путают Хэллоуин и Рождество? Потому что OCT 31 == DEC 25.",
+  "Есть 10 типов людей: те, кто понимает двоичную систему, и те, кто нет.",
+  "— Сколько программистов нужно, чтобы вкрутить лампочку? — Ни одного, это аппаратная проблема.",
+  "Оптимист: стакан наполовину полон. Пессимист: наполовину пуст. Программист: стакан в два раза больше, чем нужно."
+];
+var JOKES_EN = [
+  "Why do programmers prefer dark mode? Because light attracts bugs.",
+  "There are 10 types of people: those who understand binary and those who don't.",
+  "A SQL query walks into a bar, approaches two tables and asks: 'May I join you?'",
+  "Why did the developer go broke? Because he used up all his cache.",
+  "How many programmers does it take to change a light bulb? None — it's a hardware problem."
+];
+var MOTIV_RU = [
+  "Не бывает идеального кода — бывает работающий. Начни с малого и двигайся вперёд.",
+  "Каждый эксперт когда-то был новичком. Главное — не сдаваться и продолжать практиковаться.",
+  "Ошибки — это не провал, а шаг к пониманию. Отлаживай, учись, иди дальше.",
+  "Лучший момент посадить дерево был 20 лет назад. Второй лучший — сегодня.",
+  "Прогресс важнее совершенства. Сделай сегодня хоть один шаг вперёд."
+];
+var MOTIV_EN = [
+  "The best time to plant a tree was 20 years ago. The second best time is now.",
+  "Every expert was once a beginner. Keep practicing.",
+  "Mistakes are not failure — they are steps toward understanding.",
+  "Progress beats perfection. Just take one step today.",
+  "Done is better than perfect. Ship it."
+];
+
+function tryMathExpression(msg){
+  var clean = msg.replace(/\s+/g, '');
+  if (!/^[0-9+\-*/%().^]+$/.test(clean)) return null;
+  if (!/[0-9]/.test(clean)) return null;
+  if (!/[+\-*/%^]/.test(clean)) return null;
+  var r = safeMathEval(clean);
+  if (r === null) return null;
+  return r;
+}
+
+function localAI(message, history){
+  var msg = String(message || '').trim();
+  var low = msg.toLowerCase();
+  var lang = detectLang(msg);
+  var ru = lang === 'ru';
+
+  if (!msg) return ru ? 'Напишите ваш вопрос, и я помогу.' : 'Type your question and I will help.';
+
+  var mathResult = tryMathExpression(msg);
+  if (mathResult !== null) {
+    var expr = msg.replace(/\s+/g, '');
+    if (ru) return 'Результат:\n\n`' + expr + ' = ' + fmtNumber(mathResult) + '`';
+    return 'Result:\n\n`' + expr + ' = ' + fmtNumber(mathResult) + '`';
+  }
+
+  if (/^(привет|прив|здравствуй|здравствуйте|хай|доброе утро|добрый день|добрый вечер|доброй ночи|hi|hello|hey|ку)\b/i.test(low)) {
+    if (ru) return pick([
+      'Привет! 👋 Я NFT-Al ассистент. Чем могу помочь?',
+      'Здравствуйте! Чем могу быть полезен сегодня?',
+      'Привет! Готов помочь: объяснить тему, написать код, посчитать или придумать идею.',
+      'Привет! 👋 О чём поговорим?'
+    ]);
+    return pick([
+      "Hi! 👋 I'm NFT-Al assistant. How can I help you today?",
+      'Hello! What can I do for you?',
+      'Hey there! Ask me anything — code, math, ideas, explanations.'
+    ]);
+  }
+
+  if (/как дела|как ты|как жизнь|что нового|how are you|how's it going|how is it going/.test(low)) {
+    if (ru) return pick([
+      'У меня всё отлично — я всегда готов помочь! А у вас как?',
+      'Работаю на полную мощность ⚡ Спасибо, что спросили. Чем займёмся?',
+      'Всё хорошо! Готов приступить к любой задаче. Что нужно сделать?'
+    ]);
+    return pick([
+      'All good — ready to help! How about you?',
+      'Running at full capacity ⚡ What can I do for you?',
+      'Doing great! What would you like to work on?'
+    ]);
+  }
+
+  if (/кто ты|что ты такое|ты кто|what are you|who are you/.test(low)) {
+    if (ru) return 'Я **NFT-Al ассистент** — встроенный помощник этого приложения. Работаю локально без API и умею:\n\n- объяснять темы\n- писать код (HTML, CSS, JS, Python)\n- считать математику\n- придумывать идеи\n- переводить, шутить и мотивировать\n\nЕсли вы добавите API-ключ в настройках, я смогу отвечать ещё точнее.';
+    return "I'm **NFT-Al assistant** — a built-in helper of this app. I work locally without any API and can:\n\n- explain topics\n- write code (HTML, CSS, JS, Python)\n- do math\n- generate ideas\n- translate, tell jokes, motivate\n\nAdd an API key in Settings to unlock even more power.";
+  }
+
+  if (/что ты умеешь|что умеешь|твои возможности|help|помощь|commands|возможности/.test(low)) {
+    if (ru) return 'Вот что я умею:\n\n- 📚 **Объяснять темы** — например «объясни, что такое рекурсия»\n- 💻 **Писать код** — HTML, CSS, JavaScript, Python\n- 🧮 **Считать математику** — просто напишите `2 + 2` или `(10 + 5) * 2`\n- 💡 **Придумывать идеи** — для проекта, статьи, бизнеса\n- 🌍 **Переводить** — напишите «переведи на английский: ...»\n- 😄 **Рассказывать шутки** и мотивировать\n- 🔍 **Объяснять термины** — просто спросите «что такое ...»\n\nСпрашивайте!';
+    return 'Here is what I can do:\n\n- 📚 **Explain topics** — "explain recursion"\n- 💻 **Write code** — HTML, CSS, JavaScript, Python\n- 🧮 **Do math** — just type `2 + 2` or `(10 + 5) * 2`\n- 💡 **Generate ideas** — for a project, article, business\n- 🌍 **Translate** — "translate to Spanish: ..."\n- 😄 **Tell jokes** and motivate\n- 🔍 **Explain terms** — "what is ..."\n\nAsk away!';
+  }
+
+  if (/спасибо|благодарю|спс|thanks|thank you|thx/.test(low)) {
+    if (ru) return pick(['Пожалуйста! 😊 Обращайтесь, если будет нужно.','Рад помочь! Если есть ещё вопросы — спрашивайте.','Всегда пожалуйста! 🙌']);
+    return pick(["You're welcome! 😊",'Happy to help! Ask me anything else.','Anytime! 🙌']);
+  }
+
+  if (/пока|до свидания|до встречи|прощай|bye|goodbye|see you/.test(low)) {
+    if (ru) return pick(['До встречи! 👋 Буду ждать новых вопросов.','Пока! Удачи в делах.','До скорого! Возвращайтесь, когда понадобится помощь.']);
+    return pick(['See you! 👋','Goodbye! Come back anytime.','Take care!']);
+  }
+
+  if (/шутк|анекдот|пошути|joke|funny/.test(low)) {
+    if (ru) return pick(JOKES_RU);
+    return pick(JOKES_EN);
+  }
+
+  if (/мотив|вдохнов|подбодри|motivat|inspire/.test(low)) {
+    if (ru) return pick(MOTIV_RU);
+    return pick(MOTIV_EN);
+  }
+
+  var transRu = msg.match(/^переведи(?:\s+на\s+([а-яёa-z]+))?\s*:?\s*(.+)$/i);
+  if (transRu) {
+    var target = (transRu[1] || 'английский').toLowerCase();
+    var text = transRu[2].trim();
+    return 'Перевод — задача, требующая полноценной языковой модели. Локальный движок не может гарантировать точный перевод.\n\n' +
+           'Что можно сделать:\n\n' +
+           '- Добавьте **API Key** в настройках (⚙️ → AI), чтобы я переводил через реальную модель.\n' +
+           '- Или уточните: «переведи на ' + escapeHtml(target) + ' фразу: ' + escapeHtml(text) + '».';
+  }
+  var transEn = msg.match(/^translate(?:\s+to\s+([a-z]+))?\s*:?\s*(.+)$/i);
+  if (transEn) {
+    var target2 = (transEn[1] || 'Russian');
+    var text2 = transEn[2].trim();
+    return 'Translation requires a full language model to be accurate. The local engine cannot guarantee a precise translation.\n\n' +
+           'To enable real translation:\n\n' +
+           '- Add an **API Key** in Settings (⚙️ → AI).\n' +
+           '- Or rephrase: "translate to ' + escapeHtml(target2) + ': ' + escapeHtml(text2) + '".';
+  }
+
+  var whatIsRu = msg.match(/^(?:что такое|объясни|расскажи про|расскажи о)\s+(.+?)\??$/i);
+  if (whatIsRu) return explainTerm(whatIsRu[1].trim(), true);
+  var whatIsEn = msg.match(/^(?:what is|what are|explain|tell me about)\s+(.+?)\??$/i);
+  if (whatIsEn) return explainTerm(whatIsEn[1].trim(), false);
+
+  if (/\bhtml\b/.test(low)) return topicHtml(ru);
+  if (/\bcss\b/.test(low)) return topicCss(ru);
+  if (/\bjavascript\b|\bjs\b/.test(low)) return topicJs(ru);
+  if (/\bpython\b/.test(low)) return topicPython(ru);
+  if (/программирован|coding|programming|код\b|code\b/.test(low)) return topicProgramming(ru);
+  if (/искусственн\w* интеллект|нейросет|machine learning|машинн\w* обучен|ai\b|artificial intelligence/.test(low)) return topicAI(ru);
+
+  if (/посчитай|вычисли|реши пример|solve|calculate|compute/.test(low)) {
+    var extracted = msg.replace(/[^0-9+\-*/%().^\s]/g, ' ').trim();
+    var r2 = safeMathEval(extracted);
+    if (r2 !== null) {
+      if (ru) return 'Результат:\n\n`' + extracted + ' = ' + fmtNumber(r2) + '`';
+      return 'Result:\n\n`' + extracted + ' = ' + fmtNumber(r2) + '`';
+    }
+    if (ru) return 'Пришлите выражение в виде: `2 + 2`, `15 * 7`, `(10 + 5) * 2`. Я посчитаю без `eval` — только безопасные операции.';
+    return 'Send an expression like `2 + 2`, `15 * 7`, `(10 + 5) * 2`. I use a safe parser — no `eval`.';
+  }
+
+  if (/иде[яй]|придумай|idea|brainstorm/.test(low)) {
+    if (ru) return 'Вот несколько идей, которые можно развить:\n\n' +
+      '1. **Мини-приложение** — трекер привычек с прогрессом и напоминаниями.\n' +
+      '2. **Блог-статья** — «10 приёмов CSS, которые упростят вёрстку».\n' +
+      '3. **Пет-проект** — генератор палитр на JavaScript с экспортом в CSS.\n' +
+      '4. **Обучающий курс** — 7 дней по основам HTML и CSS с практикой.\n' +
+      '5. **Телеграм-бот** — ежедневные короткие задачи по программированию.';
+    return 'Here are a few ideas to develop:\n\n' +
+      '1. **Mini-app** — a habit tracker with progress and reminders.\n' +
+      '2. **Blog post** — "10 CSS tricks that simplify layout".\n' +
+      '3. **Pet project** — a JavaScript palette generator with CSS export.\n' +
+      '4. **Mini-course** — 7 days of HTML & CSS basics with practice.\n' +
+      '5. **Telegram bot** — daily short coding challenges.';
+  }
+
+  if (ru) {
+    return 'Я получил ваш запрос: «' + escapeHtml(msg.slice(0, 200)) + '».\n\n' +
+      'Встроенный локальный движок отвечает на темы: приветствие, программирование, HTML/CSS/JS/Python, математика, идеи, шутки, мотивация, объяснение терминов.\n\n' +
+      'Чтобы получить более точный и развёрнутый ответ, попробуйте одно из:\n\n' +
+      '- Уточнить задачу конкретнее («объясни, что такое рекурсия на примере»)\n' +
+      '- Добавить **API-ключ** в настройках (⚙️ → AI) — тогда я подключусь к настоящей модели\n\n' +
+      'Как я могу помочь?';
+  }
+  return 'I received your request: "' + escapeHtml(msg.slice(0, 200)) + '".\n\n' +
+    'The built-in local engine covers: greetings, programming, HTML/CSS/JS/Python, math, ideas, jokes, motivation, term explanations.\n\n' +
+    'For deeper answers:\n\n' +
+    '- Ask more specifically ("explain recursion with an example")\n' +
+    '- Add an **API key** in Settings (⚙️ → AI) to connect a real model\n\n' +
+    'How can I help?';
+}
+
+function explainTerm(term, ru){
+  var tkey = term.toLowerCase();
+  var dict = {
+    'рекурси': { ru: '**Рекурсия** — приём, когда функция вызывает саму себя для решения более простой подзадачи.\n\n**Пример (Python):**\n\n```python\ndef factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n```\n\nГлавное — всегда должно быть **условие выхода** (база), иначе будет бесконечный вызов.', en: '**Recursion** — a technique where a function calls itself on a smaller subproblem.\n\n**Example (Python):**\n\n```python\ndef factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n```\n\nAlways define a **base case**, otherwise the recursion never ends.' },
+    'recursion': { ru: '**Рекурсия** — функция вызывает саму себя для более простой подзадачи. Нужна база (условие выхода) и рекурсивный шаг.', en: '**Recursion** — a function calls itself on a smaller subproblem. Needs a base case and a recursive step.' },
+    'алгоритм': { ru: '**Алгоритм** — конечная последовательность шагов для решения задачи.', en: '**Algorithm** — a finite sequence of steps to solve a problem.' },
+    'массив': { ru: '**Массив** — структура данных с доступом по индексу. В JS: `const arr = [1, 2, 3]`.', en: '**Array** — a data structure with index access. In JS: `const arr = [1, 2, 3]`.' },
+    'array': { ru: '**Массив** — структура данных с доступом по индексу.', en: '**Array** — a data structure with index access.' },
+    'объект': { ru: '**Объект** — коллекция пар ключ-значение. Пример: `{ name: "NFT-Al", age: 1 }`.', en: '**Object** — a collection of key-value pairs.' },
+    'object': { ru: '**Объект** — коллекция пар ключ-значение.', en: '**Object** — a collection of key-value pairs.' },
+    'функция': { ru: '**Функция** — блок кода, который можно вызвать. Пример: `function sum(a, b) { return a + b; }`.', en: '**Function** — a reusable block of code.' },
+    'function': { ru: '**Функция** — блок кода, который можно вызвать.', en: '**Function** — a reusable block of code.' },
+    'цикл': { ru: '**Цикл** — повторение блока кода. Виды: `for`, `while`, `do..while`.', en: '**Loop** — repeating a block of code. Types: `for`, `while`, `do..while`.' },
+    'loop': { ru: '**Цикл** — повторение блока кода.', en: '**Loop** — repeating a block of code.' },
+    'переменная': { ru: '**Переменная** — именованное хранилище значения. В JS: `let`, `const`, `var`.', en: '**Variable** — a named storage of a value.' },
+    'variable': { ru: '**Переменная** — именованное хранилище значения.', en: '**Variable** — a named storage of a value.' },
+    'dom': { ru: '**DOM** (Document Object Model) — объектная модель HTML-документа.', en: '**DOM** — Document Object Model. JS can create, modify and remove elements.' },
+    'api': { ru: '**API** — интерфейс, через который программы обмениваются данными.', en: '**API** — an interface for programs to exchange data (often HTTP + JSON).' },
+    'http': { ru: '**HTTP** — протокол передачи данных. Методы: GET, POST, PUT, DELETE.', en: '**HTTP** — data transfer protocol. Methods: GET, POST, PUT, DELETE.' },
+    'json': { ru: '**JSON** — текстовый формат данных.', en: '**JSON** — a text data format: objects `{}`, arrays `[]`, strings, numbers, booleans, null.' },
+    'css': { ru: '**CSS** — язык описания внешнего вида HTML.', en: '**CSS** — a language for describing presentation of HTML.' },
+    'html': { ru: '**HTML** — язык разметки веб-страниц.', en: '**HTML** — a markup language for web pages.' },
+    'javascript': { ru: '**JavaScript** — язык программирования для браузера и сервера.', en: '**JavaScript** — a programming language for the browser and server (Node.js).' },
+    'python': { ru: '**Python** — высокоуровневый язык программирования.', en: '**Python** — a high-level programming language. Simple syntax, many libraries.' }
+  };
+  for (var key in dict) {
+    if (tkey.indexOf(key) !== -1) return dict[key][ru ? 'ru' : 'en'];
+  }
+  return ru
+    ? '**' + escapeHtml(term) + '** — это понятие. Дайте больше контекста («объясни на примере», «где применяется»), и я постараюсь ответить точнее.'
+    : '**' + escapeHtml(term) + '** — a concept. Add more context ("explain with an example"), and I will try to answer more precisely.';
+}
+
+function topicHtml(ru){
+  if (ru) return '## HTML — язык разметки\n\n**HTML** описывает структуру веб-страницы с помощью тегов.\n\n```html\n<!DOCTYPE html>\n<html lang="ru">\n<head>\n  <meta charset="UTF-8">\n  <title>Моя страница</title>\n</head>\n<body>\n  <h1>Привет, мир!</h1>\n  <p>Это <strong>абзац</strong>.</p>\n</body>\n</html>\n```\n\nОсновные теги: `<h1>`–`<h6>`, `<p>`, `<a>`, `<ul>`, `<ol>`, `<li>`, `<div>`, `<span>`, `<img>`, `<form>`, `<input>`, `<button>`.';
+  return '## HTML — markup language\n\n**HTML** describes the structure of a web page with tags.\n\n```html\n<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>My page</title>\n</head>\n<body>\n  <h1>Hello, world!</h1>\n  <p>This is a <strong>paragraph</strong>.</p>\n</body>\n</html>\n```';
+}
+function topicCss(ru){
+  if (ru) return '## CSS — стили\n\n**CSS** описывает внешний вид HTML.\n\n```css\n.button {\n  background: #7c5cff;\n  color: #fff;\n  padding: 10px 18px;\n  border-radius: 10px;\n  transition: transform .2s;\n}\n.button:hover {\n  transform: translateY(-2px);\n}\n```\n\nСелекторы: `.class`, `#id`, `tag`, `:hover`, `::before`.';
+  return '## CSS — styles\n\n**CSS** describes presentation of HTML.\n\n```css\n.button {\n  background: #7c5cff;\n  color: #fff;\n  padding: 10px 18px;\n  border-radius: 10px;\n}\n```';
+}
+function topicJs(ru){
+  if (ru) return '## JavaScript\n\n**JS** — динамический язык для браузера и сервера.\n\n```javascript\nconst greet = (name) => {\n  return `Hello, ${name}!`;\n};\n\nconsole.log(greet("NFT-Al"));\n```\n\nОсновы: переменные (`let`, `const`), функции, массивы, объекты, промисы/async-await, DOM.';
+  return '## JavaScript\n\n**JS** — a dynamic language for browser and server.\n\n```javascript\nconst greet = (name) => `Hello, ${name}!`;\nconsole.log(greet("NFT-Al"));\n```';
+}
+function topicPython(ru){
+  if (ru) return '## Python\n\n**Python** — высокоуровневый язык с простым синтаксисом.\n\n```python\ndef greet(name):\n    return f"Привет, {name}!"\n\nprint(greet("NFT-Al"))\n```\n\nПопулярен в: анализе данных, ML, скриптах, backend (Django, FastAPI).';
+  return '## Python\n\n**Python** — a high-level language with simple syntax.\n\n```python\ndef greet(name):\n    return f"Hello, {name}!"\n\nprint(greet("NFT-Al"))\n```';
+}
+function topicProgramming(ru){
+  if (ru) return '## Программирование\n\nЭто процесс создания инструкций для компьютера. Основы:\n\n1. **Переменные** — хранение данных\n2. **Условия** — `if / else`\n3. **Циклы** — `for`, `while`\n4. **Функции** — переиспользуемый код\n5. **Структуры данных** — массивы, объекты, множества\n6. **Алгоритмы** — способы решения задач\n\nС чего хотите начать: HTML/CSS, JavaScript, Python?';
+  return '## Programming\n\nCreating instructions for a computer. Basics:\n\n1. **Variables**\n2. **Conditionals** (`if/else`)\n3. **Loops** (`for`, `while`)\n4. **Functions**\n5. **Data structures**\n6. **Algorithms**\n\nWhere would you like to start — HTML/CSS, JavaScript, or Python?';
+}
+function topicAI(ru){
+  if (ru) return '## Искусственный интеллект\n\n**ИИ** — область computer science, создающая системы, которые выполняют задачи, требующие «интеллекта».\n\nНаправления:\n\n- **Машинное обучение** — модели учатся на данных\n- **Нейросети** — многослойные модели (CNN, RNN, Transformer)\n- **NLP** — обработка естественного языка\n- **Computer Vision** — распознавание изображений';
+  return '## Artificial Intelligence\n\n**AI** — a field of computer science building systems that perform tasks requiring "intelligence".\n\nBranches:\n\n- **Machine Learning**\n- **Neural Networks** (CNN, RNN, Transformer)\n- **NLP**\n- **Computer Vision**';
+}
+
+/* =========================================================
+   STORAGE
+   ========================================================= */
+function loadChats(){
+  try {
+    var raw = localStorage.getItem(LS.chats);
+    state.chats = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(state.chats)) state.chats = [];
+  } catch(e){ state.chats = []; }
+  state.currentChatId = localStorage.getItem(LS.current) || null;
+}
+function saveChats(){
+  try { localStorage.setItem(LS.chats, JSON.stringify(state.chats)); }
+  catch(e){ showToast(t('saveFailed'), 'err'); }
+  if (state.currentChatId) {
+    try { localStorage.setItem(LS.current, state.currentChatId); } catch(e){}
+  } else {
+    try { localStorage.removeItem(LS.current); } catch(e){}
+  }
+}
+function loadSettings(){
+  try {
+    var raw = localStorage.getItem(LS.settings);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        state.settings = Object.assign({}, DEFAULT_SETTINGS, parsed);
+      }
+    }
+  } catch(e){ state.settings = Object.assign({}, DEFAULT_SETTINGS); }
+}
+function saveSettings(){
+  try { localStorage.setItem(LS.settings, JSON.stringify(state.settings)); }
+  catch(e){ showToast(t('saveFailed'), 'err'); }
+}
+
+/* =========================================================
+   CHAT MANAGEMENT
+   ========================================================= */
+function getCurrentChat(){
+  if (!state.currentChatId) return null;
+  for (var i = 0; i < state.chats.length; i++) {
+    if (state.chats[i].id === state.currentChatId) return state.chats[i];
+  }
+  return null;
+}
+function createChat(){
+  var now = Date.now();
+  var chat = {
+    id: uid(),
+    title: state.settings.uiLang === 'ru' ? 'Новый чат' : 'New chat',
+    createdAt: now,
+    updatedAt: now,
+    messages: []
+  };
+  state.chats.unshift(chat);
+  state.currentChatId = chat.id;
+  saveChats();
+  return chat;
+}
+function ensureChat(){
+  var c = getCurrentChat();
+  if (!c) c = createChat();
+  return c;
+}
+function deleteChat(id){
+  var chat = null;
+  for (var i = 0; i < state.chats.length; i++) {
+    if (state.chats[i].id === id) { chat = state.chats[i]; break; }
+  }
+  if (!chat) return;
+  if (!confirm(t('deleteChatConfirm').replace('{title}', chat.title))) return;
+  state.chats = state.chats.filter(function(c){ return c.id !== id; });
+  if (state.currentChatId === id) {
+    state.currentChatId = state.chats.length ? state.chats[0].id : null;
+  }
+  saveChats();
+  renderChatList();
+  renderMessages();
+  showToast(t('chatDeleted'), 'ok');
+}
+function renameChat(id){
+  var chat = null;
+  for (var i = 0; i < state.chats.length; i++) {
+    if (state.chats[i].id === id) { chat = state.chats[i]; break; }
+  }
+  if (!chat) return;
+
+  var item = document.querySelector('.chat-item[data-id="' + id + '"]');
+  if (!item) return;
+  var main = item.querySelector('.chat-item-main');
+  if (!main) return;
+
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'rename-input';
+  input.value = chat.title;
+  main.innerHTML = '';
+  main.appendChild(input);
+  input.focus();
+  input.select();
+
+  function finish(save){
+    if (save) {
+      var v = input.value.trim();
+      if (v) chat.title = v.slice(0, 80);
+      chat.updatedAt = Date.now();
+      saveChats();
+    }
+    renderChatList();
+    renderMessages();
+  }
+
+  input.addEventListener('keydown', function(ev){
+    if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+    else if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+  });
+  input.addEventListener('blur', function(){ finish(true); });
+}
+function autoTitle(text){
+  var tt = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!tt) return state.settings.uiLang === 'ru' ? 'Новый чат' : 'New chat';
+  if (tt.length > 48) tt = tt.slice(0, 48).replace(/\s+\S*$/, '') + '…';
+  return tt;
+}
+
+/* =========================================================
+   RENDER: CHAT LIST
+   ========================================================= */
+function renderChatList(){
+  var list = $('#chatList');
+  list.innerHTML = '';
+
+  var q = state.searchQuery.trim().toLowerCase();
+  var items = state.chats.slice().sort(function(a, b){ return b.updatedAt - a.updatedAt; });
+  if (q) {
+    items = items.filter(function(c){
+      if (c.title.toLowerCase().indexOf(q) !== -1) return true;
+      for (var i = 0; i < c.messages.length; i++) {
+        if (String(c.messages[i].content || '').toLowerCase().indexOf(q) !== -1) return true;
+      }
+      return false;
+    });
+  }
+
+  if (items.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-history';
+    empty.textContent = q ? t('nothingFound') : t('emptyHistory');
+    list.appendChild(empty);
+    return;
+  }
+
+  items.forEach(function(chat){
+    var item = document.createElement('div');
+    item.className = 'chat-item' + (chat.id === state.currentChatId ? ' active' : '');
+    item.setAttribute('data-id', chat.id);
+
+    var main = document.createElement('div');
+    main.className = 'chat-item-main';
+
+    var title = document.createElement('div');
+    title.className = 'chat-item-title';
+    title.textContent = chat.title;
+
+    var date = document.createElement('div');
+    date.className = 'chat-item-date';
+    date.textContent = fmtDate(chat.updatedAt);
+
+    main.appendChild(title);
+    main.appendChild(date);
+
+    var actions = document.createElement('div');
+    actions.className = 'chat-item-actions';
+
+    var ren = document.createElement('button');
+    ren.type = 'button';
+    ren.className = 'mini';
+    ren.title = t('rename');
+    ren.textContent = '✎';
+    ren.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      renameChat(chat.id);
+    });
+
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'mini danger';
+    del.title = t('deleteChat');
+    del.textContent = '🗑';
+    del.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      deleteChat(chat.id);
+    });
+
+    actions.appendChild(ren);
+    actions.appendChild(del);
+
+    item.appendChild(main);
+    item.appendChild(actions);
+
+    item.addEventListener('click', function(){
+      if (state.currentChatId === chat.id) {
+        closeSidebar();
+        return;
+      }
+      state.currentChatId = chat.id;
+      saveChats();
+      renderChatList();
+      renderMessages();
+      closeSidebar();
+    });
+
+    list.appendChild(item);
+  });
+}
+
+/* =========================================================
+   RENDER: MESSAGES
+   ========================================================= */
+function renderMessages(){
+  var box = $('#messages');
+  box.innerHTML = '';
+
+  var chat = getCurrentChat();
+  var msgs = chat ? chat.messages : [];
+
+  updateCounter(msgs.length);
+
+  if (!chat || msgs.length === 0) {
+    box.appendChild(buildWelcome());
+    var titleElW = $('#topbarTitle');
+    titleElW.textContent = chat ? chat.title : t('appTitle');
+    return;
+  }
+
+  msgs.forEach(function(m, idx){
+    box.appendChild(buildMessageNode(m, idx));
+  });
+
+  requestAnimationFrame(function(){ box.scrollTop = box.scrollHeight; });
+
+  var titleEl = $('#topbarTitle');
+  titleEl.textContent = chat ? chat.title : t('appTitle');
+}
+
+function updateCounter(n){
+  var el = $('#msgCounter');
+  var lang = state.settings.uiLang;
+  var word;
+  if (lang === 'ru') {
+    word = 'сообщений';
+    var last = n % 100;
+    if (last < 11 || last > 14) {
+      var d = n % 10;
+      if (d === 1) word = 'сообщение';
+      else if (d >= 2 && d <= 4) word = 'сообщения';
+    }
+  } else {
+    word = n === 1 ? 'message' : 'messages';
+  }
+  el.textContent = n + ' ' + word;
+}
+
+function buildWelcome(){
+  var wrap = document.createElement('div');
+  wrap.className = 'welcome';
+
+  var logo = document.createElement('div');
+  logo.className = 'welcome-logo';
+  logo.textContent = 'NFT';
+
+  var h1 = document.createElement('h1');
+  h1.textContent = t('welcomeTitle');
+
+  var p = document.createElement('p');
+  p.textContent = t('welcomeSub');
+
+  var grid = document.createElement('div');
+  grid.className = 'quick-grid';
+
+  var quick = [
+    { icon: '💻', label: t('qCodeLabel'),    prompt: t('qCodePrompt') },
+    { icon: '🧮', label: t('qMathLabel'),    prompt: t('qMathPrompt') },
+    { icon: '📚', label: t('qExplainLabel'), prompt: t('qExplainPrompt') },
+    { icon: '💡', label: t('qIdeaLabel'),    prompt: t('qIdeaPrompt') }
+  ];
+
+  quick.forEach(function(q){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'quick';
+    var ic = document.createElement('span');
+    ic.className = 'qi';
+    ic.textContent = q.icon;
+    var tx = document.createElement('span');
+    tx.textContent = q.label;
+    b.appendChild(ic);
+    b.appendChild(tx);
+    b.addEventListener('click', function(){ sendMessage(q.prompt); });
+    grid.appendChild(b);
+  });
+
+  wrap.appendChild(logo);
+  wrap.appendChild(h1);
+  wrap.appendChild(p);
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+function buildMessageNode(m, idx){
+  var isUser = m.role === 'user';
+  var node = document.createElement('div');
+  node.className = 'msg ' + (isUser ? 'user' : 'ai') + (m.error ? ' error' : '');
+  node.setAttribute('data-idx', String(idx));
+
+  var av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = isUser ? (state.settings.uiLang === 'ru' ? 'Я' : 'U') : 'N';
+
+  var col = document.createElement('div');
+  col.className = 'col';
+
+  var bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  if (isUser || m.error) {
+    var plain = document.createElement('div');
+    plain.className = 'plain';
+    plain.textContent = m.content;
+    bubble.appendChild(plain);
+  } else {
+    var md = document.createElement('div');
+    md.className = 'md';
+    md.appendChild(renderMarkdown(m.content));
+    bubble.appendChild(md);
+  }
+
+  col.appendChild(bubble);
+
+  var meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  meta.textContent = (isUser ? t('you') : t('assistant')) + ' · ' + fmtTime(m.time || Date.now());
+  col.appendChild(meta);
+
+  var actions = document.createElement('div');
+  actions.className = 'msg-actions';
+
+  var copyBtn = document.createElement('button');
+  copyBtn.type = 'button';
+  copyBtn.className = 'act';
+  copyBtn.textContent = t('copy');
+  copyBtn.addEventListener('click', function(){ copyMessage(m.content, copyBtn); });
+  actions.appendChild(copyBtn);
+
+  if (!isUser) {
+    var reBtn = document.createElement('button');
+    reBtn.type = 'button';
+    reBtn.className = 'act';
+    reBtn.textContent = t('regenerate');
+    reBtn.addEventListener('click', function(){ regenerateMessage(idx); });
+    actions.appendChild(reBtn);
+
+    var exBtn = document.createElement('button');
+    exBtn.type = 'button';
+    exBtn.className = 'act';
+    exBtn.textContent = t('refine');
+    exBtn.addEventListener('click', function(){
+      var chat = getCurrentChat();
+      if (!chat) return;
+      for (var i = chat.messages.length - 1; i >= 0; i--) {
+        if (chat.messages[i].role === 'user') {
+          var text = chat.messages[i].content;
+          var input = $('#input');
+          input.value = (state.settings.uiLang === 'ru' ? 'Уточни, пожалуйста: ' : 'Please refine: ') + text;
+          autoResizeInput();
+          input.focus();
+          return;
+        }
+      }
+    });
+    actions.appendChild(exBtn);
+  }
+
+  col.appendChild(actions);
+  node.appendChild(av);
+  node.appendChild(col);
+  return node;
+}
+
+/* =========================================================
+   SEND MESSAGE
+   ========================================================= */
+function sendMessage(text){
+  if (state.generating) {
+    showToast(t('waitForReply'), 'err');
+    return;
+  }
+  var content = (typeof text === 'string') ? text : $('#input').value;
+  content = content.replace(/\s+$/, '');
+  if (!content.trim()) return;
+
+  var chat = ensureChat();
+
+  var userMsg = { role: 'user', content: content, time: Date.now() };
+  chat.messages.push(userMsg);
+
+  var defaultTitle = state.settings.uiLang === 'ru' ? 'Новый чат' : 'New chat';
+  if (chat.messages.length === 1 || chat.title === defaultTitle || chat.title === 'Новый чат' || chat.title === 'New chat') {
+    chat.title = autoTitle(content);
+  }
+  chat.updatedAt = Date.now();
+
+  saveChats();
+
+  var input = $('#input');
+  input.value = '';
+  autoResizeInput();
+
+  renderChatList();
+  renderMessages();
+
+  requestAI(chat);
+}
+
+/* =========================================================
+   REQUEST AI
+   ========================================================= */
+function setGenerating(on){
+  state.generating = on;
+  var sendBtn = $('#sendBtn');
+  var stopBtn = $('#stopBtn');
+  if (on) {
+    sendBtn.disabled = true;
+    stopBtn.classList.add('visible');
+  } else {
+    sendBtn.disabled = false;
+    stopBtn.classList.remove('visible');
+  }
+}
+
+function showTyping(){
+  var box = $('#messages');
+  var el = document.createElement('div');
+  el.className = 'typing';
+  el.id = 'typingIndicator';
+
+  var av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = 'N';
+
+  var tbox = document.createElement('div');
+  tbox.className = 'typing-box';
+
+  var label = document.createElement('div');
+  label.className = 'typing-label';
+  label.textContent = t('typing');
+
+  var dots = document.createElement('div');
+  dots.className = 'dots';
+  dots.appendChild(document.createElement('i'));
+  dots.appendChild(document.createElement('i'));
+  dots.appendChild(document.createElement('i'));
+
+  tbox.appendChild(label);
+  tbox.appendChild(dots);
+
+  el.appendChild(av);
+  el.appendChild(tbox);
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+function hideTyping(){
+  var el = document.getElementById('typingIndicator');
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+
+function requestAI(chat){
+  setGenerating(true);
+  showTyping();
+
+  state.abortController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+
+  var history = chat.messages.slice(0, -1);
+  var userMessage = chat.messages[chat.messages.length - 1].content;
+
+  var key = (state.settings.apiKey || '').trim();
+
+  var promise;
+  if (!key) {
+    promise = localAIAsync(userMessage, history);
+  } else {
+    var fmt = state.settings.apiFormat;
+    if (fmt === 'chat') {
+      promise = requestChatCompletionsAPI(userMessage, history, state.abortController);
+    } else {
+      promise = requestResponsesAPI(userMessage, history, state.abortController);
+    }
+  }
+
+  promise.then(function(result){
+    hideTyping();
+    setGenerating(false);
+    state.abortController = null;
+
+    if (result && result.aborted) return;
+
+    var text = (result && typeof result.text === 'string') ? result.text : '';
+    var err = result && result.error;
+
+    if (err && !text) {
+      chat.messages.push({ role:'assistant', content: err, time: Date.now(), error: true });
+    } else if (!text) {
+      chat.messages.push({ role:'assistant', content: t('emptyReply'), time: Date.now(), error: true });
+    } else {
+      chat.messages.push({ role:'assistant', content: text, time: Date.now() });
+    }
+    chat.updatedAt = Date.now();
+    saveChats();
+    renderChatList();
+    renderMessages();
+  }).catch(function(e){
+    hideTyping();
+    setGenerating(false);
+    state.abortController = null;
+    chat.messages.push({
+      role:'assistant',
+      content: t('unknownError') + (e && e.message ? e.message : String(e)),
+      time: Date.now(),
+      error: true
+    });
+    saveChats();
+    renderChatList();
+    renderMessages();
+  });
+}
+
+function localAIAsync(message, history){
+  return new Promise(function(resolve){
+    var text = localAI(message, history);
+    setTimeout(function(){ resolve({ text: text }); }, 320 + Math.random() * 350);
+  });
+}
+
+/* =========================================================
+   RESPONSES API
+   ========================================================= */
+function requestResponsesAPI(message, history, controller){
+  var url = (state.settings.apiUrl || DEFAULT_URLS.responses).trim();
+  if (!/^https?:\/\//i.test(url)) {
+    return Promise.resolve({ error: state.settings.uiLang === 'ru'
+      ? 'Неверный API URL. Проверьте адрес в настройках (должен начинаться с http:// или https://).'
+      : 'Invalid API URL. Check the address in Settings (must start with http:// or https://).' });
+  }
+
+  var inputMessages = [];
+  var body = {
+    model: state.settings.model || 'gpt-4o-mini',
+    input: [],
+    temperature: Number(state.settings.temperature) || 0.7
+  };
+  if (state.settings.maxTokens) {
+    var mt = Number(state.settings.maxTokens);
+    if (mt > 0) body.max_output_tokens = mt;
+  }
+
+  history.forEach(function(m){
+    if (!m || !m.content) return;
+    inputMessages.push({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: [{ type: m.role === 'user' ? 'input_text' : 'output_text', text: m.content }]
+    });
+  });
+  inputMessages.push({
+    role: 'user',
+    content: [{ type: 'input_text', text: message }]
+  });
+
+  body.input = inputMessages;
+  if (state.settings.systemPrompt) body.instructions = state.settings.systemPrompt;
+
+  return fetchWithTimeout(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + state.settings.apiKey
+    },
+    body: JSON.stringify(body)
+  }, controller, 60000).then(function(res){
+    if (res.aborted) return { aborted: true };
+    return handleHttpResponse(res);
+  }).then(function(resp){
+    if (resp && resp.__err) return { error: resp.__err };
+    if (resp && resp.aborted) return { aborted: true };
+    try {
+      var txt = extractResponsesText(resp.data);
+      if (!txt) return { error: 'Empty response from API (Responses).' };
+      return { text: txt };
+    } catch(e){
+      return { error: 'API response parse error: ' + e.message };
+    }
+  }).catch(function(err){
+    return { error: describeFetchError(err) };
+  });
+}
+
+function extractResponsesText(data){
+  if (!data) return '';
+  if (typeof data.output_text === 'string' && data.output_text) return data.output_text;
+  if (Array.isArray(data.output)) {
+    var parts = [];
+    data.output.forEach(function(item){
+      if (!item) return;
+      if (Array.isArray(item.content)) {
+        item.content.forEach(function(c){
+          if (!c) return;
+          if (typeof c.text === 'string') parts.push(c.text);
+          else if (typeof c.content === 'string') parts.push(c.content);
+        });
+      } else if (typeof item.text === 'string') {
+        parts.push(item.text);
+      }
+    });
+    if (parts.length) return parts.join('\n').trim();
+  }
+  if (Array.isArray(data.choices) && data.choices[0] && data.choices[0].message) {
+    return data.choices[0].message.content || '';
+  }
+  return '';
+}
+
+/* =========================================================
+   CHAT COMPLETIONS API
+   ========================================================= */
+function requestChatCompletionsAPI(message, history, controller){
+  var url = (state.settings.apiUrl || DEFAULT_URLS.chat).trim();
+  if (!/^https?:\/\//i.test(url)) {
+    return Promise.resolve({ error: state.settings.uiLang === 'ru'
+      ? 'Неверный API URL. Проверьте адрес в настройках (должен начинаться с http:// или https://).'
+      : 'Invalid API URL. Check the address in Settings (must start with http:// or https://).' });
+  }
+
+  var messages = [];
+  if (state.settings.systemPrompt) {
+    messages.push({ role: 'system', content: state.settings.systemPrompt });
+  }
+  history.forEach(function(m){
+    if (!m || !m.content) return;
+    messages.push({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content });
+  });
+  messages.push({ role: 'user', content: message });
+
+  var body = {
+    model: state.settings.model || 'gpt-4o-mini',
+    messages: messages,
+    temperature: Number(state.settings.temperature) || 0.7
+  };
+  if (state.settings.maxTokens) {
+    var mt = Number(state.settings.maxTokens);
+    if (mt > 0) body.max_tokens = mt;
+  }
+
+  return fetchWithTimeout(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + state.settings.apiKey
+    },
+    body: JSON.stringify(body)
+  }, controller, 60000).then(function(res){
+    if (res.aborted) return { aborted: true };
+    return handleHttpResponse(res);
+  }).then(function(resp){
+    if (resp && resp.__err) return { error: resp.__err };
+    if (resp && resp.aborted) return { aborted: true };
+    try {
+      var txt = extractChatText(resp.data);
+      if (!txt) return { error: 'Empty response from API (Chat Completions).' };
+      return { text: txt };
+    } catch(e){
+      return { error: 'API response parse error: ' + e.message };
+    }
+  }).catch(function(err){
+    return { error: describeFetchError(err) };
+  });
+}
+
+function extractChatText(data){
+  if (!data) return '';
+  if (data.choices && data.choices[0]) {
+    var c = data.choices[0];
+    if (c.message && typeof c.message.content === 'string') return c.message.content;
+    if (typeof c.text === 'string') return c.text;
+  }
+  return '';
+}
+
+/* =========================================================
+   FETCH HELPERS
+   ========================================================= */
+function fetchWithTimeout(url, options, controller, ms){
+  var timedOut = false;
+  var timer = setTimeout(function(){ timedOut = true; if (controller) { try { controller.abort(); } catch(e){} } }, ms);
+
+  var opts = Object.assign({}, options);
+  if (controller) opts.signal = controller.signal;
+
+  return fetch(url, opts).then(function(res){
+    clearTimeout(timer);
+    return res;
+  }).catch(function(err){
+    clearTimeout(timer);
+    if (timedOut) {
+      var e = new Error('timeout');
+      e.__timeout = true;
+      throw e;
+    }
+    if (err && (err.name === 'AbortError')) {
+      return { aborted: true };
+    }
+    throw err;
+  });
+}
+
+function handleHttpResponse(res){
+  if (res && res.aborted) return res;
+  if (!res || typeof res.status !== 'number') {
+    return { __err: 'Server unavailable or invalid response.' };
+  }
+  if (res.ok) {
+    return res.json().then(function(data){ return { data: data }; })
+      .catch(function(){ return { __err: 'Failed to parse JSON response from server.' }; });
+  }
+  return res.text().then(function(body){
+    return { __err: httpErrorText(res.status, body) };
+  }).catch(function(){
+    return { __err: httpErrorText(res.status, '') };
+  });
+}
+
+function httpErrorText(status, body){
+  var snippet = '';
+  if (body) {
+    try {
+      var j = JSON.parse(body);
+      if (j && j.error && (j.error.message || typeof j.error === 'string')) {
+        snippet = ' — ' + (j.error.message || j.error);
+      } else if (typeof j === 'string') {
+        snippet = ' — ' + j;
+      }
+    } catch(e) {
+      snippet = ' — ' + String(body).slice(0, 200);
+    }
+  }
+  switch (status) {
+    case 400: return 'HTTP 400: bad request' + snippet;
+    case 401: return 'HTTP 401: invalid API key' + snippet;
+    case 403: return 'HTTP 403: access forbidden' + snippet;
+    case 404: return 'HTTP 404: not found' + snippet;
+    case 429: return 'HTTP 429: too many requests' + snippet;
+    case 500: case 502: case 503: case 504:
+      return 'HTTP ' + status + ': server error' + snippet;
+    default:
+      return 'HTTP ' + status + ': API error' + snippet;
+  }
+}
+
+function describeFetchError(err){
+  if (!err) return 'Unknown network error.';
+  var name = err.name || '';
+  var msg = err.message || String(err);
+  if (name === 'AbortError') return 'Request cancelled.';
+  if (err.__timeout) return 'Request timeout. Server did not respond in time.';
+  if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+    return 'Could not connect to API. Check API URL and settings. Possible causes:\n- no internet connection\n- wrong domain or port\n- CORS blocking (browser-to-third-party-server request)\n- server unavailable.';
+  }
+  return 'Network error: ' + msg;
+}
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+function copyMessage(text, btn){
+  copyText(String(text || '')).then(function(ok){
+    if (ok) {
+      if (btn) {
+        var old = btn.textContent;
+        btn.textContent = t('copiedShort');
+        btn.classList.add('ok');
+        setTimeout(function(){
+          btn.textContent = old;
+          btn.classList.remove('ok');
+        }, 1500);
+      }
+      showToast(t('copiedShort'), 'ok');
+    } else {
+      showToast(t('copyFailed'), 'err');
+    }
+  });
+}
+
+function regenerateMessage(idx){
+  if (state.generating) {
+    showToast(t('waitForReply'), 'err');
+    return;
+  }
+  var chat = getCurrentChat();
+  if (!chat) return;
+
+  var userIdx = -1;
+  for (var i = idx - 1; i >= 0; i--) {
+    if (chat.messages[i].role === 'user') { userIdx = i; break; }
+  }
+  if (userIdx === -1) {
+    for (var j = chat.messages.length - 1; j >= 0; j--) {
+      if (chat.messages[j].role === 'user') { userIdx = j; break; }
+    }
+  }
+  if (userIdx === -1) {
+    showToast(t('noRequestToRepeat'), 'err');
+    return;
+  }
+
+  var userContent = chat.messages[userIdx].content;
+
+  chat.messages = chat.messages.slice(0, userIdx);
+  saveChats();
+  renderMessages();
+
+  setTimeout(function(){ sendMessage(userContent); }, 80);
+}
+
+function stopGeneration(){
+  if (!state.generating) return;
+  if (state.abortController) {
+    try { state.abortController.abort(); } catch(e){}
+  }
+  state.generating = false;
+  hideTyping();
+  setGenerating(false);
+  state.abortController = null;
+
+  var chat = getCurrentChat();
+  if (chat && chat.messages.length) {
+    var last = chat.messages[chat.messages.length - 1];
+    if (last.role === 'user') {
+      chat.messages.push({
+        role: 'assistant',
+        content: t('stoppedByUser'),
+        time: Date.now()
+      });
+      chat.updatedAt = Date.now();
+      saveChats();
+      renderChatList();
+      renderMessages();
+    }
+  }
+  showToast(t('generationStopped'), 'ok');
+}
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+function autoResizeInput(){
+  var ta = $('#input');
+  ta.style.height = 'auto';
+  var max = 190;
+  ta.style.height = Math.min(ta.scrollHeight, max) + 'px';
+}
+
+/* =========================================================
+   THEME
+   ========================================================= */
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', state.settings.theme);
+  document.documentElement.style.setProperty('--font-size', state.settings.fontSize + 'px');
+  document.documentElement.setAttribute('lang', state.settings.uiLang);
+  var icon = state.settings.theme === 'dark' ? '🌙' : '☀️';
+  var setIcon = $('#themeIcon');
+  if (setIcon) setIcon.textContent = icon;
+  var topIcon = $('#themeBtnTop');
+  if (topIcon) topIcon.textContent = icon;
+}
+
+function toggleTheme(){
+  state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+  saveSettings();
+  applyTheme();
+  showToast(state.settings.theme === 'dark' ? t('themeDark') : t('themeLight'), 'ok');
+}
+
+/* =========================================================
+   APPLY TRANSLATIONS TO STATIC UI
+   ========================================================= */
+function applyTranslations(){
+  document.title = t('appTitle');
+  var logo = $('#logoText'); if (logo) logo.textContent = t('logoText');
+  var nc = $('#newChatLabel'); if (nc) nc.textContent = t('newChat');
+  var sh = $('#searchInput'); if (sh) sh.setAttribute('placeholder', t('searchPlaceholder'));
+  var sl = $('#settingsLabel'); if (sl) sl.textContent = t('settings');
+  var tl = $('#themeLabel'); if (tl) tl.textContent = t('theme');
+  var el_ = $('#exportLabel'); if (el_) el_.textContent = t('export');
+  var etl = $('#exportTxtLabel'); if (etl) etl.textContent = t('downloadTxt');
+  var ejl = $('#exportJsonLabel'); if (ejl) ejl.textContent = t('downloadJson');
+  var chl = $('#clearHistoryLabel'); if (chl) chl.textContent = t('clearHistory');
+  var inp = $('#input'); if (inp) inp.setAttribute('placeholder', t('inputPlaceholder'));
+  var ch = $('#composerHint'); if (ch) ch.textContent = t('composerHint');
+  var st = $('#settingsTitle'); if (st) st.textContent = t('settingsTitle');
+  var sAI = $('#secAI'); if (sAI) sAI.textContent = t('secAI');
+  var sIF = $('#secInterface'); if (sIF) sIF.textContent = t('secInterface');
+  var sDT = $('#secData'); if (sDT) sDT.textContent = t('secData');
+  var lAF = $('#lblApiFormat'); if (lAF) lAF.textContent = t('lblApiFormat');
+  var lAK = $('#lblApiKey'); if (lAK) lAK.textContent = t('lblApiKey');
+  var lM = $('#lblModel'); if (lM) lM.textContent = t('lblModel');
+  var lMT = $('#lblMaxTokens'); if (lMT) lMT.textContent = t('lblMaxTokens');
+  var lAU = $('#lblApiUrl'); if (lAU) lAU.textContent = t('lblApiUrl');
+  var lT = $('#lblTemperature'); if (lT) lT.textContent = t('lblTemperature');
+  var lSP = $('#lblSystemPrompt'); if (lSP) lSP.textContent = t('lblSystemPrompt');
+  var lUL = $('#lblUiLang'); if (lUL) lUL.textContent = t('lblUiLang');
+  var lRL = $('#lblReplyLang'); if (lRL) lRL.textContent = t('lblReplyLang');
+  var lTH = $('#lblTheme'); if (lTH) lTH.textContent = t('lblTheme');
+  var lFS = $('#lblFontSize'); if (lFS) lFS.textContent = t('lblFontSize');
+  var w = $('#apiKeyWarn'); if (w) w.textContent = t('apiKeyWarn');
+  var dTL = $('#dataTxtLabel'); if (dTL) dTL.textContent = t('dataTxtLabel');
+  var dJL = $('#dataJsonLabel'); if (dJL) dJL.textContent = t('dataJsonLabel');
+  var dCL = $('#dataClearLabel'); if (dCL) dCL.textContent = t('dataClearLabel');
+  var cAL = $('#checkApiLabel'); if (cAL) cAL.textContent = t('checkApiLabel');
+  var cnL = $('#cancelLabel'); if (cnL) cnL.textContent = t('cancelLabel');
+  var svL = $('#saveLabel'); if (svL) svL.textContent = t('saveLabel');
+  var langBtn = $('#langBtnTop'); if (langBtn) langBtn.textContent = state.settings.uiLang.toUpperCase();
+
+  // reply language select options
+  var sel = $('#setLanguage');
+  if (sel) {
+    sel.options[0].textContent = t('replyLangAuto');
+    sel.options[1].textContent = t('replyLangRu');
+    sel.options[2].textContent = t('replyLangEn');
+  }
+  var topTitle = $('#topbarTitle');
+  if (topTitle) {
+    var chat = getCurrentChat();
+    topTitle.textContent = chat ? chat.title : t('appTitle');
+  }
+}
+
+function setUiLang(lang){
+  if (lang !== 'ru' && lang !== 'en') return;
+  state.settings.uiLang = lang;
+  saveSettings();
+  applyTheme();
+  applyTranslations();
+  renderChatList();
+  renderMessages();
+  updateCounter((getCurrentChat() ? getCurrentChat().messages.length : 0));
+  showToast(lang === 'ru' ? 'Язык: Русский' : 'Language: English', 'ok');
+}
+
+/* =========================================================
+   EXPORT
+   ========================================================= */
+function downloadBlob(filename, content, mime){
+  var blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 200);
+}
+
+function exportTXT(chat){
+  chat = chat || getCurrentChat();
+  if (!chat || !chat.messages.length) {
+    showToast(t('noChatToExport'), 'err');
+    return;
+  }
+  var lines = [];
+  lines.push('Chat: ' + chat.title);
+  lines.push('Created: ' + new Date(chat.createdAt).toLocaleString());
+  lines.push('Updated: ' + new Date(chat.updatedAt).toLocaleString());
+  lines.push('Messages: ' + chat.messages.length);
+  lines.push('');
+  lines.push('========================================');
+  lines.push('');
+  chat.messages.forEach(function(m){
+    var who = m.role === 'user' ? 'USER' : 'NFT-AL';
+    lines.push(who + ':');
+    lines.push(String(m.content || ''));
+    lines.push('');
+  });
+  var name = 'nftal-' + slugify(chat.title) + '.txt';
+  downloadBlob(name, lines.join('\n'), 'text/plain;charset=utf-8');
+  showToast(t('exportTxtDone'), 'ok');
+}
+
+function exportJSON(chat){
+  chat = chat || getCurrentChat();
+  if (!chat || !chat.messages.length) {
+    showToast(t('noChatToExport'), 'err');
+    return;
+  }
+  var data = {
+    id: chat.id,
+    title: chat.title,
+    createdAt: chat.createdAt,
+    updatedAt: chat.updatedAt,
+    messages: chat.messages.map(function(m){
+      return {
+        role: m.role,
+        content: m.content,
+        time: m.time,
+        error: !!m.error
+      };
+    })
+  };
+  var name = 'nftal-' + slugify(chat.title) + '.json';
+  downloadBlob(name, JSON.stringify(data, null, 2), 'application/json;charset=utf-8');
+  showToast(t('exportJsonDone'), 'ok');
+}
+
+function slugify(s){
+  return String(s || 'chat')
+    .toLowerCase()
+    .replace(/[^\w\u0400-\u04FF]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40) || 'chat';
+}
+
+/* =========================================================
+   CLEAR HISTORY
+   ========================================================= */
+function clearAllHistory(){
+  if (!state.chats.length) {
+    showToast(t('historyAlreadyEmpty'), 'ok');
+    return;
+  }
+  if (!confirm(t('clearHistoryConfirm'))) return;
+  state.chats = [];
+  state.currentChatId = null;
+  try { localStorage.removeItem(LS.chats); } catch(e){}
+  try { localStorage.removeItem(LS.current); } catch(e){}
+  renderChatList();
+  renderMessages();
+  showToast(t('historyCleared'), 'ok');
+}
+
+/* =========================================================
+   SETTINGS MODAL
+   ========================================================= */
+function openSettings(){
+  var s = state.settings;
+  $('#setApiFormat').value = s.apiFormat;
+  $('#setApiKey').value = s.apiKey || '';
+  $('#setModel').value = s.model || '';
+  $('#setApiUrl').value = s.apiUrl || '';
+  $('#setSystemPrompt').value = s.systemPrompt || '';
+  $('#setTemperature').value = String(s.temperature);
+  $('#tempVal').textContent = String(s.temperature);
+  $('#setMaxTokens').value = String(s.maxTokens || '');
+  $('#setLanguage').value = s.language || 'auto';
+  $('#setUiLang').value = s.uiLang || 'en';
+  $('#setTheme').value = s.theme || 'dark';
+  $('#setFontSize').value = String(s.fontSize);
+  $('#fontVal').textContent = s.fontSize + 'px';
+
+  updateApiUrlPlaceholder();
+  $('#settingsModal').classList.add('open');
+}
+function closeSettings(){
+  $('#settingsModal').classList.remove('open');
+}
+function updateApiUrlPlaceholder(){
+  var fmt = $('#setApiFormat').value;
+  var placeholder = fmt === 'chat' ? DEFAULT_URLS.chat : DEFAULT_URLS.responses;
+  $('#setApiUrl').setAttribute('placeholder', placeholder);
+}
+
+function saveSettingsFromForm(){
+  var fmt = $('#setApiFormat').value;
+  var key = $('#setApiKey').value.trim();
+  var model = $('#setModel').value.trim() || 'gpt-4o-mini';
+  var url = $('#setApiUrl').value.trim();
+  var sysPrompt = $('#setSystemPrompt').value;
+  var temp = parseFloat($('#setTemperature').value);
+  var maxTok = parseInt($('#setMaxTokens').value, 10);
+  var lang = $('#setLanguage').value;
+  var uiLang = $('#setUiLang').value;
+  var theme = $('#setTheme').value;
+  var fontSize = parseInt($('#setFontSize').value, 10);
+
+  if (isNaN(temp)) temp = 0.7;
+  if (isNaN(maxTok) || maxTok <= 0) maxTok = 1200;
+  if (isNaN(fontSize)) fontSize = 15;
+
+  var prevLang = state.settings.uiLang;
+
+  state.settings.apiFormat = fmt;
+  state.settings.apiKey = key;
+  state.settings.model = model;
+  state.settings.apiUrl = url;
+  state.settings.systemPrompt = sysPrompt;
+  state.settings.temperature = temp;
+  state.settings.maxTokens = maxTok;
+  state.settings.language = lang;
+  state.settings.uiLang = uiLang;
+  state.settings.theme = theme;
+  state.settings.fontSize = fontSize;
+
+  saveSettings();
+  applyTheme();
+  closeSettings();
+
+  if (prevLang !== uiLang) {
+    applyTranslations();
+    renderChatList();
+    renderMessages();
+    updateCounter((getCurrentChat() ? getCurrentChat().messages.length : 0));
+  }
+
+  showToast(t('settingsSaved'), 'ok');
+}
+
+function checkApi(){
+  var key = $('#setApiKey').value.trim();
+  if (!key) {
+    showToast(t('needApiKey'), 'err');
+    return;
+  }
+  var btn = $('#checkApiBtn');
+  var spanEl = $('#checkApiLabel');
+  var oldText = spanEl.textContent;
+  btn.disabled
